@@ -5,7 +5,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { API_URL, getAuthToken } from '../lib/data';
+import { API_URL } from '../app/constants';
+import { getAuthToken } from '../lib/data';
 
 interface SystemMetrics {
   status: 'healthy' | 'degraded' | 'unhealthy';
