@@ -39,7 +39,7 @@ ClawFi is a production-grade crypto agent that runs 24/7 on local hardware, moni
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-repo/clawfi.git
+git clone https://github.com/clawfiai/clawfi.git
 cd clawfi
 
 # Install dependencies
@@ -143,18 +143,40 @@ Hardened detection requires:
 - Sell >= moltThresholdPercent of baseline
 - Follow-up buy or bridge within rotationWindowMinutes
 
-### Clanker Connector
+### Launchpad Connectors
 
-Indexes new token launches on Base:
+ClawFi supports multiple launchpad connectors across different chains:
+
+| Launchpad | Chain | Status | Features |
+|-----------|-------|--------|----------|
+| **Clanker** | Base | ✅ Active | Token launches, creator tracking, signals |
+| **Pump.fun** | Solana | ✅ Active | Bonding curves, graduation to Raydium |
+| **Four.meme** | BSC | ✅ Active | Bonding curves, PancakeSwap graduation |
+
+#### Clanker (Base)
 
 ```bash
-# Environment variables
-BASE_RPC_URL=https://mainnet.base.org
-CLANKER_FACTORY_ADDRESSES=0x...
+CLANKER_ENABLED=true
 CLANKER_POLL_INTERVAL_MS=10000
 ```
 
-See [CLANKER.md](docs/CLANKER.md) for configuration details.
+#### Pump.fun (Solana)
+
+```bash
+PUMPFUN_ENABLED=true
+PUMPFUN_POLL_INTERVAL_MS=15000
+PUMPFUN_GRADUATION_ONLY=false  # Only track graduated tokens
+```
+
+#### Four.meme (BSC)
+
+```bash
+FOURMEME_ENABLED=true
+FOURMEME_POLL_INTERVAL_MS=15000
+FOURMEME_MIN_MARKET_CAP=0  # Minimum market cap filter
+```
+
+See [CLANKER.md](docs/CLANKER.md) for detailed Clanker configuration.
 
 ## API Reference
 
@@ -185,6 +207,37 @@ Full API documentation: [API.md](docs/API.md)
 Connect to `/ws?token=<jwt>` for real-time updates:
 - Signal notifications
 - System status updates
+
+## CLI Tool
+
+The ClawFi CLI provides terminal-based control of your agent:
+
+```bash
+# Install globally (or use pnpm -C apps/cli dev)
+npm install -g @clawfi/cli
+
+# Login to your ClawFi node
+clawfi login --host http://localhost:3001
+
+# Check agent status
+clawfi status
+
+# List recent signals
+clawfi signals --limit 10 --severity high
+
+# Watch a token
+clawfi watch token 0x1234...5678 --chain base
+
+# Execute agent commands
+clawfi cmd "watch wallet 0x1234...5678 base"
+clawfi cmd "killswitch on"
+
+# Stream real-time signals
+clawfi stream
+
+# List strategies
+clawfi strategies
+```
 
 ## Extension
 
@@ -285,14 +338,21 @@ pnpm lint
 - ✅ Assist Mode button stub (extension)
 - ✅ Watched tokens/wallets DB tables
 
+### v0.2.1 (Current) - Multi-Chain Launchpads
+- ✅ CLI tool (`@clawfi/cli`) for terminal control
+- ✅ Discord webhook notifications
+- ✅ Pump.fun connector (Solana launchpad)
+- ✅ Four.meme connector (BSC launchpad)
+- ✅ WebSocket reconnection with heartbeat
+- ✅ GitHub Actions CI/CD workflows
+
 ### v0.3 (Planned)
 - [ ] DEX transaction building (assist mode)
 - [ ] Wallet signature flow
 - [ ] More CEX connectors (Kraken, Coinbase)
-- [ ] More launchpad connectors (Pump.fun, FourMeme)
 - [ ] Strategy backtesting
-- [ ] Discord notifications
 - [ ] Price impact analysis
+- [ ] Price alerts for watched tokens
 
 ### v0.4 (Future)
 - [ ] Multi-user support
