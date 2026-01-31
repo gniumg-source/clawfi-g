@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Generate Prisma client
+        run: cd apps/node && npx prisma generate
+        
+      - name: Build packages
+        run: pnpm build
+        
+      - name: Build CLI
+        run: cd apps/cli && pnpm build
+        
+      - name: Build Extension
+        run: cd apps/extension && pnpm build
+        
+      - name: Package Extension
+        run: |
+          cd apps/extension
+          zip -r ../../clawfi-extension-${{ github.ref_name }}.zip dist/
+          
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          files: |
+            clawfi-extension-${{ github.ref_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      # Publish CLI to npm (optional - uncomment when ready)
+      # - name: Publish CLI to npm
+      #   run: |
+      #     cd apps/cli
+      #     npm publish --access public
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
