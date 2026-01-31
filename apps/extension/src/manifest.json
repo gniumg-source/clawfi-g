@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "ClawFi",
-  "version": "0.2.0",
-  "description": "Crypto intelligence overlay - detect tokens and view signals",
+  "version": "0.2.1",
+  "description": "Crypto intelligence overlay - detect tokens and view signals across EVM & Solana",
   "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://etherscan.io/*",
@@ -11,6 +11,11 @@
     "https://app.uniswap.org/*",
     "https://*.basescan.org/*",
     "https://arbiscan.io/*",
+    "https://bscscan.com/*",
+    "https://*.bscscan.com/*",
+    "https://solscan.io/*",
+    "https://pump.fun/*",
+    "https://four.meme/*",
     "https://clanker.world/*"
   ],
   "background": {
@@ -25,15 +30,31 @@
         "https://dexscreener.com/*",
         "https://app.uniswap.org/*",
         "https://*.basescan.org/*",
-        "https://arbiscan.io/*"
+        "https://arbiscan.io/*",
+        "https://bscscan.com/*",
+        "https://*.bscscan.com/*"
       ],
       "js": ["content.js"],
       "css": ["content.css"],
       "run_at": "document_idle"
     },
     {
+      "matches": [
+        "https://solscan.io/*",
+        "https://pump.fun/*"
+      ],
+      "js": ["content-solana.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    },
+    {
       "matches": ["https://clanker.world/*"],
       "js": ["clanker.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://four.meme/*"],
+      "js": ["fourmeme.js"],
       "run_at": "document_idle"
     }
   ],
@@ -49,6 +70,6 @@
       "48": "icons/icon48.png"
     },
     "default_title": "ClawFi",
-    "default_popup": "options/index.html"
+    "default_popup": "popup/popup.html"
   }
 }

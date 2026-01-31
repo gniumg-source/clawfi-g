@@ -33,6 +33,17 @@ function copyStaticFiles() {
         resolve(distDir, 'options/index.html')
       );
       
+      // Copy popup HTML
+      if (!existsSync(resolve(distDir, 'popup'))) {
+        mkdirSync(resolve(distDir, 'popup'), { recursive: true });
+      }
+      if (existsSync(resolve(__dirname, 'src/popup/popup.html'))) {
+        copyFileSync(
+          resolve(__dirname, 'src/popup/popup.html'),
+          resolve(distDir, 'popup/popup.html')
+        );
+      }
+      
       // Copy icons
       const iconsDir = resolve(distDir, 'icons');
       if (!existsSync(iconsDir)) {
@@ -58,7 +69,10 @@ export default defineConfig({
       input: {
         background: resolve(__dirname, 'src/background/index.ts'),
         content: resolve(__dirname, 'src/content/index.tsx'),
+        'content-solana': resolve(__dirname, 'src/content/content-solana.tsx'),
         clanker: resolve(__dirname, 'src/content/sites/clanker.ts'),
+        fourmeme: resolve(__dirname, 'src/content/sites/fourmeme.ts'),
+        'popup/popup': resolve(__dirname, 'src/popup/popup.ts'),
       },
       output: {
         entryFileNames: '[name].js',

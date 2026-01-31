@@ -1,49 +1,53 @@
 /**
- * ClawFi Extension - Content Script
+ * ClawFi Extension - Solana Content Script
  * 
- * Detects token addresses on supported pages and shows overlay with signals
+ * Detects Solana token addresses on supported pages and shows overlay with signals
  */
 
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-// Ethereum address regex
-const ETH_ADDRESS_REGEX = /0x[a-fA-F0-9]{40}/g;
+// Solana address regex (base58 encoded, 32-44 chars)
+const SOLANA_ADDRESS_REGEX = /[1-9A-HJ-NP-Za-km-z]{32,44}/g;
 
-// Chain detection from URL
-function detectChain(url: string): string | undefined {
-  if (url.includes('etherscan.io')) return 'ethereum';
-  if (url.includes('arbiscan.io')) return 'arbitrum';
-  if (url.includes('basescan.org')) return 'base';
-  if (url.includes('dexscreener.com')) {
-    if (url.includes('/ethereum/')) return 'ethereum';
-    if (url.includes('/arbitrum/')) return 'arbitrum';
-    if (url.includes('/base/')) return 'base';
-  }
-  return undefined;
-}
+// Common Solana addresses to ignore
+const IGNORED_ADDRESSES = new Set([
+  'So11111111111111111111111111111111111111112', // Wrapped SOL
+  '11111111111111111111111111111111', // System Program
+  'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', // Token Program
+]);
 
-// Detect token address from page
-function detectTokenAddress(): string | null {
+// Detect Solana address from page
+function detectSolanaAddress(): string | null {
   const url = window.location.href;
   
-  // Try URL first
-  const urlMatch = url.match(ETH_ADDRESS_REGEX);
-  if (urlMatch) {
-    return urlMatch[0]!;
+  // Try URL first for specific patterns
+  if (url.includes('solscan.io/token/') || url.includes('solscan.io/account/')) {
+    const match = url.match(/(?:token|account)\/([1-9A-HJ-NP-Za-km-z]{32,44})/);
+    if (match) return match[1];
+  }
+  
+  if (url.includes('pump.fun/')) {
+    const match = url.match(/pump\.fun\/(?:coin|profile)\/([1-9A-HJ-NP-Za-km-z]{32,44})/);
+    if (match) return match[1];
+  }
+  
+  // Try URL match
+  const urlMatches = url.match(SOLANA_ADDRESS_REGEX);
+  if (urlMatches) {
+    for (const addr of urlMatches) {
+      if (!IGNORED_ADDRESSES.has(addr) && addr.length >= 32) {
+        return addr;
+      }
+    }
   }
   
   // Try page content
   const pageText = document.body.innerText;
-  const pageMatches = pageText.match(ETH_ADDRESS_REGEX);
-  if (pageMatches && pageMatches.length > 0) {
-    // Return first unique address that looks like a token (not common addresses)
-    const commonAddresses = new Set([
-      '0x0000000000000000000000000000000000000000',
-      '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-    ]);
+  const pageMatches = pageText.match(SOLANA_ADDRESS_REGEX);
+  if (pageMatches) {
     for (const addr of pageMatches) {
-      if (!commonAddresses.has(addr.toLowerCase())) {
+      if (!IGNORED_ADDRESSES.has(addr) && addr.length >= 32) {
         return addr;
       }
     }
@@ -52,11 +56,15 @@ function detectTokenAddress(): string | null {
   return null;
 }
 
-// Detect wallet providers
-function detectWalletPresence(): { ethereum: boolean; solana: boolean } {
+// Detect wallet presence
+function detectWalletPresence(): { phantom: boolean; solflare: boolean } {
+  const win = window as unknown as { 
+    solana?: { isPhantom?: boolean }; 
+    solflare?: unknown;
+  };
   return {
-    ethereum: typeof (window as unknown as { ethereum?: unknown }).ethereum !== 'undefined',
-    solana: typeof (window as unknown as { solana?: unknown }).solana !== 'undefined',
+    phantom: typeof win.solana !== 'undefined' && win.solana.isPhantom === true,
+    solflare: typeof win.solflare !== 'undefined',
   };
 }
 
@@ -76,14 +84,13 @@ interface Settings {
 }
 
 // Overlay component
-function ClawFiOverlay() {
+function ClawFiSolanaOverlay() {
   const [token, setToken] = useState<string | null>(null);
-  const [chain, setChain] = useState<string | undefined>();
   const [signals, setSignals] = useState<Signal[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [enabled, setEnabled] = useState(true);
-  const [wallets, setWallets] = useState({ ethereum: false, solana: false });
+  const [wallets, setWallets] = useState({ phantom: false, solflare: false });
 
   useEffect(() => {
     // Check settings
@@ -95,24 +102,23 @@ function ClawFiOverlay() {
     setWallets(detectWalletPresence());
 
     // Detect token
-    const detectedToken = detectTokenAddress();
-    const detectedChain = detectChain(window.location.href);
+    const detectedToken = detectSolanaAddress();
     
     if (detectedToken) {
       setToken(detectedToken);
-      setChain(detectedChain);
       
       // Notify background
       chrome.runtime.sendMessage({
         type: 'DETECTED_TOKEN',
         token: detectedToken,
-        chain: detectedChain,
+        chain: 'solana',
+        source: window.location.host.includes('pump.fun') ? 'pumpfun' : 'solscan',
       });
       
       // Fetch signals
       setLoading(true);
       chrome.runtime.sendMessage(
-        { type: 'GET_SIGNALS', token: detectedToken, chain: detectedChain },
+        { type: 'GET_SIGNALS', token: detectedToken, chain: 'solana' },
         (data: Signal[]) => {
           setSignals(data || []);
           setLoading(false);
@@ -140,6 +146,7 @@ function ClawFiOverlay() {
     high: '#f97316',
     medium: '#eab308',
     low: '#3b82f6',
+    info: '#64748b',
   };
 
   return (
@@ -160,17 +167,17 @@ function ClawFiOverlay() {
             width: '48px',
             height: '48px',
             borderRadius: '12px',
-            background: 'linear-gradient(135deg, #14b899 0%, #0d957d 100%)',
+            background: 'linear-gradient(135deg, #9945FF 0%, #14F195 100%)',
             border: 'none',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 20px rgba(20, 184, 153, 0.4)',
+            boxShadow: '0 4px 20px rgba(153, 69, 255, 0.4)',
             position: 'relative',
           }}
         >
-          <span style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>C</span>
+          <span style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>S</span>
           {signals.length > 0 && (
             <span
               style={{
@@ -202,8 +209,8 @@ function ClawFiOverlay() {
             width: '320px',
             background: '#0a0f14',
             borderRadius: '12px',
-            border: '1px solid #1a2530',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+            border: '1px solid #9945FF33',
+            boxShadow: '0 8px 32px rgba(153, 69, 255, 0.2)',
             overflow: 'hidden',
           }}
         >
@@ -211,14 +218,14 @@ function ClawFiOverlay() {
           <div
             style={{
               padding: '12px 16px',
-              background: 'linear-gradient(135deg, #14b899 0%, #0d957d 100%)',
+              background: 'linear-gradient(135deg, #9945FF 0%, #14F195 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
             }}
           >
             <span style={{ fontWeight: 'bold', color: 'white', fontSize: '14px' }}>
-              ClawFi
+              ClawFi • Solana
             </span>
             <button
               onClick={() => setExpanded(false)}
@@ -251,17 +258,14 @@ function ClawFiOverlay() {
               >
                 {formatAddress(token)}
               </code>
-              {chain && (
-                <span
-                  style={{
-                    fontSize: '11px',
-                    color: '#14b899',
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {chain}
-                </span>
-              )}
+              <span
+                style={{
+                  fontSize: '11px',
+                  color: '#14F195',
+                }}
+              >
+                Solana
+              </span>
             </div>
           </div>
 
@@ -275,11 +279,11 @@ function ClawFiOverlay() {
               fontSize: '11px',
             }}
           >
-            <span style={{ color: wallets.ethereum ? '#14b899' : '#64748b' }}>
-              {wallets.ethereum ? '✓' : '○'} MetaMask
+            <span style={{ color: wallets.phantom ? '#9945FF' : '#64748b' }}>
+              {wallets.phantom ? '✓' : '○'} Phantom
             </span>
-            <span style={{ color: wallets.solana ? '#14b899' : '#64748b' }}>
-              {wallets.solana ? '✓' : '○'} Phantom
+            <span style={{ color: wallets.solflare ? '#14F195' : '#64748b' }}>
+              {wallets.solflare ? '✓' : '○'} Solflare
             </span>
           </div>
 
@@ -371,7 +375,7 @@ function ClawFiOverlay() {
               textAlign: 'center',
             }}
           >
-            ClawFi v0.2.1 • Configure in extension options
+            ClawFi v0.2.1 • Solana Support
           </div>
         </div>
       )}
@@ -382,11 +386,11 @@ function ClawFiOverlay() {
 // Mount the overlay
 function mountOverlay() {
   const container = document.createElement('div');
-  container.id = 'clawfi-overlay-root';
+  container.id = 'clawfi-solana-overlay-root';
   document.body.appendChild(container);
   
   const root = createRoot(container);
-  root.render(<ClawFiOverlay />);
+  root.render(<ClawFiSolanaOverlay />);
 }
 
 // Wait for page to load
@@ -395,5 +399,3 @@ if (document.readyState === 'loading') {
 } else {
   mountOverlay();
 }
-
-

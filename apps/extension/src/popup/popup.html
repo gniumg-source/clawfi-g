@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClawFi</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 320px;
+      min-height: 400px;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0a0f14;
+      color: #f1f5f9;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #14b899 0%, #0d957d 100%);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .logo-icon {
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+      color: #14b899;
+    }
+    
+    .logo-text {
+      font-weight: 700;
+      font-size: 16px;
+      color: white;
+    }
+    
+    .version {
+      font-size: 11px;
+      color: rgba(255,255,255,0.7);
+    }
+    
+    .status-bar {
+      padding: 12px 16px;
+      background: #0d1117;
+      border-bottom: 1px solid #1a2530;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 4px;
+    }
+    
+    .status-dot.connected { background: #22c55e; }
+    .status-dot.disconnected { background: #ef4444; }
+    .status-dot.warning { background: #f59e0b; }
+    
+    .main {
+      padding: 16px;
+    }
+    
+    .section {
+      margin-bottom: 16px;
+    }
+    
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    
+    .stat-card {
+      background: #1a2530;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    
+    .stat-value.primary { color: #14b899; }
+    .stat-value.warning { color: #f59e0b; }
+    
+    .recent-signals {
+      background: #1a2530;
+      border-radius: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    
+    .signal-item {
+      padding: 10px 12px;
+      border-bottom: 1px solid #0d1117;
+      display: flex;
+      gap: 10px;
+    }
+    
+    .signal-item:last-child {
+      border-bottom: none;
+    }
+    
+    .signal-severity {
+      width: 6px;
+      height: 6px;
+      border-radius: 3px;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+    
+    .signal-severity.critical { background: #ef4444; }
+    .signal-severity.high { background: #f97316; }
+    .signal-severity.medium { background: #eab308; }
+    .signal-severity.low { background: #3b82f6; }
+    .signal-severity.info { background: #64748b; }
+    
+    .signal-content {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .signal-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: #f1f5f9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .signal-time {
+      font-size: 10px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    
+    .empty-state {
+      padding: 24px;
+      text-align: center;
+      color: #64748b;
+      font-size: 12px;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .btn {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    
+    .btn-primary {
+      background: #14b899;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #0d957d;
+    }
+    
+    .btn-secondary {
+      background: #1a2530;
+      color: #f1f5f9;
+    }
+    
+    .btn-secondary:hover {
+      background: #2a3540;
+    }
+    
+    .footer {
+      padding: 12px 16px;
+      border-top: 1px solid #1a2530;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .footer-link {
+      font-size: 11px;
+      color: #64748b;
+      text-decoration: none;
+    }
+    
+    .footer-link:hover {
+      color: #14b899;
+    }
+    
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #0d1117;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #1a2530;
+      border-radius: 2px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #2a3540;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">C</div>
+      <span class="logo-text">ClawFi</span>
+    </div>
+    <span class="version">v0.2.0</span>
+  </div>
+  
+  <div class="status-bar">
+    <div class="status-item">
+      <span class="status-dot" id="api-status"></span>
+      <span id="api-status-text">Checking...</span>
+    </div>
+    <div class="status-item">
+      <span class="status-dot" id="ws-status"></span>
+      <span id="ws-status-text">WebSocket</span>
+    </div>
+  </div>
+  
+  <div class="main">
+    <div class="section">
+      <div class="section-title">Today's Activity</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value primary" id="signals-count">-</div>
+          <div class="stat-label">Signals</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="tokens-count">-</div>
+          <div class="stat-label">Tokens Tracked</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value warning" id="alerts-count">-</div>
+          <div class="stat-label">Alerts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="chains-count">3</div>
+          <div class="stat-label">Chains</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">Recent Signals</div>
+      <div class="recent-signals" id="signals-list">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-dashboard">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
+            <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/>
+          </svg>
+          Dashboard
+        </button>
+        <button class="btn btn-secondary" id="btn-settings">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+          </svg>
+          Settings
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <a href="https://github.com/clawfiai/clawfi" target="_blank" class="footer-link">GitHub</a>
+    <a href="#" id="link-docs" class="footer-link">Documentation</a>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
