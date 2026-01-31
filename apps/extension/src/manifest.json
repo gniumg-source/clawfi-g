@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "ClawFi",
+  "version": "0.2.0",
+  "description": "Crypto intelligence overlay - detect tokens and view signals",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://etherscan.io/*",
+    "https://*.etherscan.io/*",
+    "https://dexscreener.com/*",
+    "https://app.uniswap.org/*",
+    "https://*.basescan.org/*",
+    "https://arbiscan.io/*",
+    "https://clanker.world/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://etherscan.io/*",
+        "https://*.etherscan.io/*",
+        "https://dexscreener.com/*",
+        "https://app.uniswap.org/*",
+        "https://*.basescan.org/*",
+        "https://arbiscan.io/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://clanker.world/*"],
+      "js": ["clanker.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options/index.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    },
+    "default_title": "ClawFi",
+    "default_popup": "options/index.html"
+  }
+}

@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 4%;
+    --foreground: 210 20% 98%;
+    --card: 220 18% 7%;
+    --card-foreground: 210 20% 98%;
+    --popover: 220 18% 7%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 166 76% 40%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 220 14% 14%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 220 14% 14%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 166 76% 40%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 220 14% 18%;
+    --input: 220 14% 18%;
+    --ring: 166 76% 40%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(220 18% 7%);
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(220 14% 25%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 14% 35%);
+}
+
+/* Glowing effects */
+.glow-claw {
+  box-shadow: 0 0 20px rgba(20, 184, 153, 0.3), 0 0 40px rgba(20, 184, 153, 0.1);
+}
+
+.glow-danger {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3), 0 0 40px rgba(239, 68, 68, 0.1);
+}
+
+/* Grid pattern background */
+.bg-grid {
+  background-image: 
+    linear-gradient(to right, hsl(220 14% 12%) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(220 14% 12%) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, #14b899 0%, #2dd4b3 50%, #5eeacb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+

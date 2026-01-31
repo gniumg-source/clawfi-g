@@ -1,0 +1,471 @@
+// ClawFi Prisma Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// User & Auth
+// ============================================
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  connectors   Connector[]
+  auditLogs    AuditLog[]
+  signals      Signal[]
+
+  @@map("users")
+}
+
+// ============================================
+// Encrypted Secrets
+// ============================================
+
+model EncryptedSecret {
+  id          String   @id @default(uuid())
+  connectorId String
+  secretType  String   // 'api_key', 'api_secret', etc.
+  ciphertext  String
+  iv          String
+  tag         String
+  salt        String
+  version     Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  connector   Connector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+
+  @@unique([connectorId, secretType])
+  @@map("encrypted_secrets")
+}
+
+// ============================================
+// Connectors
+// ============================================
+
+model Connector {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // 'cex', 'dex', 'wallet', 'launchpad'
+  venue     String   // 'binance', 'uniswap_v2', 'clanker', etc.
+  label     String?
+  enabled   Boolean  @default(true)
+  config    Json     @default("{}")
+  status    String   @default("disconnected") // 'connected', 'disconnected', 'error'
+  lastCheck DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  secrets   EncryptedSecret[]
+
+  @@map("connectors")
+}
+
+// ============================================
+// Strategies
+// ============================================
+
+model Strategy {
+  id           String   @id @default(uuid())
+  strategyType String   // 'moltwatch', 'launch_detector', etc.
+  name         String
+  description  String?
+  status       String   @default("disabled") // 'enabled', 'disabled', 'error'
+  config       Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  state        StrategyState[]
+  signals      Signal[]
+
+  @@map("strategies")
+}
+
+model StrategyState {
+  id         String   @id @default(uuid())
+  strategyId String
+  stateKey   String   // e.g., 'wallet:0x123:token:0x456'
+  stateData  Json
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  strategy   Strategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+
+  @@unique([strategyId, stateKey])
+  @@map("strategy_states")
+}
+
+// ============================================
+// Signals
+// ============================================
+
+model Signal {
+  id                String   @id @default(uuid())
+  ts                DateTime @default(now())
+  severity          String   // 'low', 'medium', 'high', 'critical'
+  signalType        String?  // 'LaunchDetected', 'MoltDetected', 'EarlyDistribution', 'LiquidityRisk'
+  title             String
+  summary           String
+  token             String?
+  tokenSymbol       String?
+  chain             String?
+  wallet            String?
+  strategyId        String
+  evidence          Json?
+  recommendedAction String   // 'none', 'monitor', 'alert', etc.
+  acknowledged      Boolean  @default(false)
+  acknowledgedAt    DateTime?
+  acknowledgedBy    String?
+  meta              Json?
+  createdAt         DateTime @default(now())
+
+  // Relations
+  strategy          Strategy @relation(fields: [strategyId], references: [id])
+  user              User?    @relation(fields: [acknowledgedBy], references: [id])
+
+  @@index([ts])
+  @@index([strategyId])
+  @@index([token])
+  @@index([wallet])
+  @@index([signalType])
+  @@map("signals")
+}
+
+// ============================================
+// Audit Logs
+// ============================================
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  ts           DateTime @default(now())
+  action       String
+  userId       String?
+  resource     String?
+  resourceId   String?
+  details      Json?
+  success      Boolean
+  errorMessage String?
+  ip           String?
+  userAgent    String?
+
+  // Relations
+  user         User?    @relation(fields: [userId], references: [id])
+
+  @@index([ts])
+  @@index([action])
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+// ============================================
+// Risk Policies
+// ============================================
+
+model RiskPolicy {
+  id               String   @id @default(uuid())
+  maxOrderUsd      Float    @default(100)
+  maxPositionUsd   Float    @default(1000)
+  maxDailyLossUsd  Float    @default(500)
+  maxSlippageBps   Int      @default(100)
+  cooldownSeconds  Int      @default(60)
+  tokenAllowlist   Json     @default("[]")
+  tokenDenylist    Json     @default("[]")
+  venueAllowlist   Json     @default("[]")
+  chainAllowlist   Json     @default("[]")
+  killSwitchActive Boolean  @default(false)
+  dryRunMode       Boolean  @default(true)
+  meta             Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("risk_policies")
+}
+
+// ============================================
+// Daily Loss Tracking
+// ============================================
+
+model DailyLossTracker {
+  id              String   @id @default(uuid())
+  date            String   // YYYY-MM-DD
+  realizedLossUsd Float    @default(0)
+  unrealizedLossUsd Float  @default(0)
+  totalTrades     Int      @default(0)
+  updatedAt       DateTime @updatedAt
+
+  @@unique([date])
+  @@map("daily_loss_trackers")
+}
+
+// ============================================
+// Launchpad Tokens (Clanker, etc.)
+// ============================================
+
+model LaunchpadToken {
+  id              String   @id @default(uuid())
+  chain           String   // 'base', 'eth', etc.
+  launchpad       String   // 'clanker', etc.
+  tokenAddress    String
+  tokenName       String?
+  tokenSymbol     String?
+  creatorAddress  String
+  factoryAddress  String?
+  txHash          String
+  blockNumber     BigInt
+  blockTimestamp  DateTime?
+  version         String?  // 'V3', 'V3.1', 'V4'
+  verified        Boolean  @default(false)
+  meta            Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  events          LaunchpadEvent[]
+  holderSnapshots HolderSnapshot[]
+  liquiditySnapshots LiquiditySnapshot[]
+
+  @@unique([chain, tokenAddress])
+  @@index([launchpad])
+  @@index([creatorAddress])
+  @@index([createdAt])
+  @@map("launchpad_tokens")
+}
+
+model LaunchpadEvent {
+  id              String   @id @default(uuid())
+  tokenId         String
+  eventType       String   // 'launched', 'verified', 'metadata_updated', etc.
+  data            Json?
+  txHash          String?
+  blockNumber     BigInt?
+  ts              DateTime @default(now())
+
+  // Relations
+  token           LaunchpadToken @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  @@index([tokenId])
+  @@index([ts])
+  @@map("launchpad_events")
+}
+
+// ============================================
+// Wallet Token Positions (for MoltWatch)
+// ============================================
+
+model WalletPosition {
+  id              String   @id @default(uuid())
+  chain           String
+  wallet          String
+  token           String
+  tokenSymbol     String?
+  baselineAmount  String   // Store as string for precision
+  baselineUsd     Float?
+  currentAmount   String
+  currentUsd      Float?
+  lastBuyTs       DateTime?
+  lastSellTs      DateTime?
+  lastBuyTxHash   String?
+  lastSellTxHash  String?
+  meta            Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([chain, wallet, token])
+  @@index([wallet])
+  @@index([token])
+  @@map("wallet_positions")
+}
+
+// ============================================
+// Launchpad Connector State (cursor tracking)
+// ============================================
+
+model LaunchpadConnectorState {
+  id              String   @id @default(uuid())
+  connectorId     String   @unique
+  chain           String
+  launchpad       String
+  lastBlockScanned BigInt  @default(0)
+  lastScanTs      DateTime?
+  errorCount      Int      @default(0)
+  lastError       String?
+  meta            Json?
+  updatedAt       DateTime @updatedAt
+
+  @@map("launchpad_connector_states")
+}
+
+// ============================================
+// Notification Settings
+// ============================================
+
+model NotificationConfig {
+  id              String   @id @default(uuid())
+  type            String   // 'telegram', 'discord', 'webhook'
+  enabled         Boolean  @default(true)
+  config          Json     // { chatId, botToken (encrypted ref), etc. }
+  signalTypes     Json     @default("[\"LaunchDetected\", \"MoltDetected\", \"EarlyDistribution\", \"LiquidityRisk\"]")
+  minSeverity     String   @default("medium") // 'low', 'medium', 'high', 'critical'
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("notification_configs")
+}
+
+// ============================================
+// Launch Coverage Statistics (v0.1.1)
+// ============================================
+
+model LaunchpadCoverage {
+  id              String   @id @default(uuid())
+  chain           String
+  launchpad       String
+  windowStart     DateTime
+  windowEnd       DateTime
+  detectedCount   Int
+  estimatedTotal  Int
+  coveragePercent Float
+  blockStart      BigInt
+  blockEnd        BigInt
+  meta            Json?    // Additional stats
+  createdAt       DateTime @default(now())
+
+  @@index([chain, launchpad])
+  @@index([windowEnd])
+  @@map("launchpad_coverage")
+}
+
+// ============================================
+// Holder Snapshots (v0.1.1 - Early Distribution)
+// ============================================
+
+model HolderSnapshot {
+  id              String   @id @default(uuid())
+  tokenId         String
+  tokenAddress    String
+  chain           String
+  timestamp       DateTime @default(now())
+  top10Percent    Float    // Top 10 holders percentage
+  top20Percent    Float    // Top 20 holders percentage
+  creatorPercent  Float    // Creator holding percentage
+  holderCount     Int      // Total holder count
+  totalSupply     String   // Total supply (string for precision)
+  concentrationScore Float // Computed score (0-100)
+  meta            Json?    // Top holders list, etc.
+  createdAt       DateTime @default(now())
+
+  // Relations
+  token           LaunchpadToken @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  @@index([tokenAddress, chain])
+  @@index([tokenId])
+  @@index([timestamp])
+  @@map("holder_snapshots")
+}
+
+// ============================================
+// Liquidity Snapshots (v0.1.1 - Liquidity Risk)
+// ============================================
+
+model LiquiditySnapshot {
+  id              String   @id @default(uuid())
+  tokenId         String
+  tokenAddress    String
+  chain           String
+  poolAddress     String?  // DEX pool address
+  dex             String?  // 'uniswap_v2', 'uniswap_v3', etc.
+  timestamp       DateTime @default(now())
+  liquidityUsd    Float
+  liquidityToken  String   // Token amount in pool (string for precision)
+  liquidityEth    String?  // ETH/Base amount in pool
+  priceUsd        Float?
+  txHash          String?  // Transaction that triggered snapshot
+  eventType       String   // 'initial', 'add', 'remove', 'snapshot'
+  meta            Json?
+  createdAt       DateTime @default(now())
+
+  // Relations
+  token           LaunchpadToken @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  @@index([tokenAddress, chain])
+  @@index([tokenId])
+  @@index([timestamp])
+  @@map("liquidity_snapshots")
+}
+
+// ============================================
+// System Metrics (v0.1.1)
+// ============================================
+
+model SystemMetric {
+  id              String   @id @default(uuid())
+  name            String   // 'launches_detected', 'coverage_percent', etc.
+  value           Float
+  labels          Json?    // { chain: 'base', launchpad: 'clanker' }
+  timestamp       DateTime @default(now())
+
+  @@index([name])
+  @@index([timestamp])
+  @@map("system_metrics")
+}
+
+// ============================================
+// Watched Tokens (v0.2 - Agent Commands)
+// ============================================
+
+model WatchedToken {
+  id            String   @id @default(uuid())
+  chain         String
+  tokenAddress  String
+  tokenSymbol   String?
+  tokenName     String?
+  tags          Json     @default("[]")   // e.g., ["moltwatch", "whale-alert"]
+  source        String   @default("manual") // 'manual', 'command', 'strategy'
+  enabled       Boolean  @default(true)
+  meta          Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([chain, tokenAddress])
+  @@index([chain])
+  @@index([tokenAddress])
+  @@map("watched_tokens")
+}
+
+// ============================================
+// Watched Wallets (v0.2 - Agent Commands)
+// ============================================
+
+model WatchedWallet {
+  id            String   @id @default(uuid())
+  chain         String
+  walletAddress String
+  label         String?  // e.g., "Vitalik", "DEV wallet"
+  tags          Json     @default("[]")
+  source        String   @default("manual")
+  enabled       Boolean  @default(true)
+  meta          Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([chain, walletAddress])
+  @@index([chain])
+  @@index([walletAddress])
+  @@map("watched_wallets")
+}

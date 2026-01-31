@@ -1,0 +1,24 @@
+---
+import FooterSidebar from './FooterSidebar.astro';
+import LayoutCommon from './LayoutCommon.astro';
+import NavBarSidebar from './NavBarSidebar.astro';
+import SideBar from './SideBar.astro';
+---
+
+<LayoutCommon>
+	<NavBarSidebar />
+	<SideBar />
+
+	<div class="flex pt-16 overflow-hidden bg-gray-900">
+		<div
+			id="main-content"
+			class="relative w-full h-full overflow-y-auto bg-gray-900 lg:ml-64 min-h-screen"
+		>
+			<main class="p-4 md:p-6">
+				<slot />
+			</main>
+
+			<FooterSidebar />
+		</div>
+	</div>
+</LayoutCommon>

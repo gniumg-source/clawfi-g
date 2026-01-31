@@ -1,0 +1,20 @@
+/* ClawFi Extension Content Script Styles */
+
+#clawfi-overlay-root {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 999999;
+  pointer-events: none;
+}
+
+#clawfi-overlay-root > * {
+  pointer-events: auto;
+}
+
+/* Reset styles for overlay */
+#clawfi-overlay-root * {
+  box-sizing: border-box;
+}
+
+

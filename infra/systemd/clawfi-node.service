@@ -1,0 +1,44 @@
+[Unit]
+Description=ClawFi Node - Crypto Intelligence Agent
+Documentation=https://github.com/clawfi/clawfi
+After=network.target postgresql.service redis.service
+
+[Service]
+Type=simple
+User=clawfi
+Group=clawfi
+WorkingDirectory=/opt/clawfi/apps/node
+
+# Environment file with secrets
+EnvironmentFile=/etc/clawfi/environment
+
+# Node.js runtime
+ExecStart=/usr/bin/node /opt/clawfi/apps/node/dist/index.js
+
+# Restart policy
+Restart=on-failure
+RestartSec=10
+
+# Resource limits
+LimitNOFILE=65535
+MemoryMax=1G
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ReadWritePaths=/opt/clawfi/logs
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=clawfi-node
+
+[Install]
+WantedBy=multi-user.target
+
+

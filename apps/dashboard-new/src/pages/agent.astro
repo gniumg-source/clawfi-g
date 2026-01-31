@@ -1,0 +1,116 @@
+---
+import LayoutSidebar from '../app/LayoutSidebar.astro';
+import AgentTerminal from '../components/AgentTerminal';
+import AgentStatusCards from '../components/AgentStatusCards';
+---
+
+<LayoutSidebar>
+	<div class="space-y-6">
+		<!-- Header -->
+		<div>
+			<h1 class="text-2xl font-bold text-white">Agent Control</h1>
+			<p class="text-gray-400">Interact with your ClawFi agent via commands</p>
+		</div>
+
+		<!-- Status Cards -->
+		<AgentStatusCards client:load />
+
+		<!-- Terminal -->
+		<div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+			<div class="px-6 py-4 border-b border-gray-700">
+				<div class="flex items-center justify-between">
+					<h2 class="text-lg font-semibold text-white flex items-center gap-2">
+						<svg class="w-5 h-5 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
+						</svg>
+						Command Terminal
+					</h2>
+					<span class="text-xs text-gray-500">Type `help` for available commands</span>
+				</div>
+			</div>
+			<AgentTerminal client:load />
+		</div>
+
+		<!-- Quick Commands -->
+		<div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
+			<h2 class="text-lg font-semibold text-white mb-4">Quick Commands</h2>
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+				<button
+					class="quick-cmd px-4 py-3 text-sm font-medium text-gray-300 bg-gray-700/50 rounded-lg hover:bg-gray-700 hover:text-white transition-colors text-left"
+					data-command="status"
+				>
+					<span class="block text-primary-400 font-mono text-xs mb-1">status</span>
+					Show agent status
+				</button>
+				<button
+					class="quick-cmd px-4 py-3 text-sm font-medium text-gray-300 bg-gray-700/50 rounded-lg hover:bg-gray-700 hover:text-white transition-colors text-left"
+					data-command="help"
+				>
+					<span class="block text-primary-400 font-mono text-xs mb-1">help</span>
+					List all commands
+				</button>
+				<button
+					class="quick-cmd px-4 py-3 text-sm font-medium text-gray-300 bg-gray-700/50 rounded-lg hover:bg-gray-700 hover:text-white transition-colors text-left"
+					data-command="list connectors"
+				>
+					<span class="block text-primary-400 font-mono text-xs mb-1">list connectors</span>
+					Show all connectors
+				</button>
+				<button
+					class="quick-cmd px-4 py-3 text-sm font-medium text-gray-300 bg-gray-700/50 rounded-lg hover:bg-gray-700 hover:text-white transition-colors text-left"
+					data-command="list strategies"
+				>
+					<span class="block text-primary-400 font-mono text-xs mb-1">list strategies</span>
+					Show all strategies
+				</button>
+				<button
+					class="quick-cmd px-4 py-3 text-sm font-medium text-yellow-300 bg-yellow-900/20 rounded-lg hover:bg-yellow-900/40 transition-colors text-left border border-yellow-700/50"
+					data-command="killswitch on"
+				>
+					<span class="block text-yellow-400 font-mono text-xs mb-1">killswitch on</span>
+					Enable kill switch
+				</button>
+				<button
+					class="quick-cmd px-4 py-3 text-sm font-medium text-emerald-300 bg-emerald-900/20 rounded-lg hover:bg-emerald-900/40 transition-colors text-left border border-emerald-700/50"
+					data-command="killswitch off"
+				>
+					<span class="block text-emerald-400 font-mono text-xs mb-1">killswitch off</span>
+					Disable kill switch
+				</button>
+				<button
+					class="quick-cmd px-4 py-3 text-sm font-medium text-gray-300 bg-gray-700/50 rounded-lg hover:bg-gray-700 hover:text-white transition-colors text-left"
+					data-command="watch token"
+				>
+					<span class="block text-primary-400 font-mono text-xs mb-1">watch token &lt;addr&gt;</span>
+					Add token to watchlist
+				</button>
+				<button
+					class="quick-cmd px-4 py-3 text-sm font-medium text-gray-300 bg-gray-700/50 rounded-lg hover:bg-gray-700 hover:text-white transition-colors text-left"
+					data-command="watch wallet"
+				>
+					<span class="block text-primary-400 font-mono text-xs mb-1">watch wallet &lt;addr&gt;</span>
+					Add wallet to watchlist
+				</button>
+			</div>
+		</div>
+	</div>
+</LayoutSidebar>
+
+<script>
+	// Check authentication
+	const token = localStorage.getItem('clawfi_token');
+	if (!token) {
+		window.location.href = '/login';
+	}
+
+	// Quick command buttons
+	document.querySelectorAll('.quick-cmd').forEach(btn => {
+		btn.addEventListener('click', () => {
+			const command = btn.getAttribute('data-command');
+			// Dispatch custom event for the terminal component
+			window.dispatchEvent(new CustomEvent('clawfi:quickcmd', { detail: { command } }));
+		});
+	});
+</script>
+
+

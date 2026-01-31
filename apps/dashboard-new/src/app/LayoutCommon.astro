@@ -1,0 +1,102 @@
+---
+import pkg from '../../package.json' assert { type: 'json' };
+import { url } from '../lib/data.js';
+import { SITE_TITLE, SITE_DESCRIPTION } from './constants.js';
+
+const { class: clazz } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>{SITE_TITLE} — All-Access Crypto Intelligence</title>
+
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content={SITE_DESCRIPTION} />
+		<link rel="icon" type="image/svg+xml" href={url('favicon.svg')} />
+		<link rel="sitemap" type="application/xml" href={url('sitemap-index.xml')} />
+
+		<meta name="author" content="ClawFi" />
+		<meta name="robots" content="noindex, nofollow" />
+		
+		<!-- Fonts -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+		<script is:inline>
+			// Always default to dark mode for crypto dashboard
+			document.documentElement.classList.add('dark');
+			
+			if (localStorage.getItem('color-theme') === 'light') {
+				document.documentElement.classList.remove('dark');
+			}
+		</script>
+	</head>
+	<body
+		class:list={[
+			clazz,
+			'bg-gray-900 text-gray-100',
+			'scrollbar scrollbar-w-3 scrollbar-thumb-rounded-[0.25rem]',
+			'scrollbar-track-gray-900 scrollbar-thumb-gray-700',
+		]}
+	>
+		<slot />
+	</body>
+</html>
+
+<script>
+	import 'flowbite';
+</script>
+
+<style is:global>
+	/* Custom scrollbar for dark theme */
+	::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+	
+	::-webkit-scrollbar-track {
+		background: #1f2937;
+	}
+	
+	::-webkit-scrollbar-thumb {
+		background: #4b5563;
+		border-radius: 4px;
+	}
+	
+	::-webkit-scrollbar-thumb:hover {
+		background: #6b7280;
+	}
+	
+	/* Terminal-style cursor animation */
+	@keyframes blink {
+		0%, 50% { opacity: 1; }
+		51%, 100% { opacity: 0; }
+	}
+	
+	.cursor-blink {
+		animation: blink 1s step-end infinite;
+	}
+	
+	/* Glow effects */
+	.glow-primary {
+		box-shadow: 0 0 20px rgba(217, 70, 239, 0.3);
+	}
+	
+	.glow-primary-hover:hover {
+		box-shadow: 0 0 30px rgba(217, 70, 239, 0.5);
+	}
+	
+	/* Status dot animation */
+	@keyframes pulse-dot {
+		0%, 100% { transform: scale(1); opacity: 1; }
+		50% { transform: scale(1.2); opacity: 0.7; }
+	}
+	
+	.pulse-dot {
+		animation: pulse-dot 2s ease-in-out infinite;
+	}
+</style>

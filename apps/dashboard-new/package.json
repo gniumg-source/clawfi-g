@@ -1,0 +1,32 @@
+{
+	"name": "@clawfi/dashboard",
+	"version": "0.1.0",
+	"private": true,
+	"description": "ClawFi Admin Dashboard - Crypto Intelligence Agent Control Panel",
+	"type": "module",
+	"scripts": {
+		"astro": "astro",
+		"build": "astro build",
+		"dev": "astro dev",
+		"preview": "astro preview",
+		"start": "astro dev"
+	},
+	"dependencies": {
+		"@astrojs/react": "^3.0.0",
+		"@astrojs/sitemap": "^3.0.0",
+		"@astrojs/tailwind": "^5.0.0",
+		"apexcharts": "^3.45.0",
+		"astro": "^4.0.0",
+		"flowbite": "^2.2.0",
+		"flowbite-typography": "^1.0.3",
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0",
+		"tailwind-scrollbar": "^3.0.5",
+		"tailwindcss": "^3.4.0"
+	},
+	"devDependencies": {
+		"@types/react": "^18.2.0",
+		"@types/react-dom": "^18.2.0",
+		"typescript": "^5.3.0"
+	}
+}

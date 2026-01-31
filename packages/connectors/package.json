@@ -1,0 +1,44 @@
+{
+  "name": "@clawfi/connectors",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Exchange and DEX connectors for ClawFi",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./binance": {
+      "types": "./dist/binance/index.d.ts",
+      "import": "./dist/binance/index.js"
+    },
+    "./evm": {
+      "types": "./dist/evm/index.d.ts",
+      "import": "./dist/evm/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src --ext .ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clawfi/core": "workspace:*",
+    "@clawfi/vault": "workspace:*",
+    "axios": "^1.6.5",
+    "viem": "^2.7.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  }
+}
+
+
