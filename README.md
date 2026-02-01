@@ -242,12 +242,25 @@ clawfi strategies
 
 ## Extension
 
-The Chrome extension provides:
+The Chrome extension provides a comprehensive crypto intelligence overlay with **Apple Liquid Glass UI** design:
+
+### Capabilities
+- **Injected UI Overlay** - Smart overlay injection on supported sites
+- **In-Page Extension Interface** - Native-feeling UI components
+- **Content Script UI Injection** - Real-time page augmentation
+- **DOM Overlay Toolbar/Panel** - Floating panels with market data
+- **Augmented Page UI** - Enhanced token analysis views
+- **Client-side Page Augmentation** - Dexscreener market data integration
+
+### Features
 - **Clanker Overlay**: First-class support for clanker.world token pages
-- Token address detection on Etherscan, Dexscreener, Uniswap, Basescan
-- Wallet presence detection (MetaMask, Phantom)
-- Signal overlay with recent alerts
-- SPA navigation handling for single-page apps
+- **Assist Mode**: Quick actions (Swap on Uniswap, Copy Address, View on DEX, etc.)
+- **Market Data**: Live price, volume, liquidity, market cap from Dexscreener
+- **Tabbed Interface**: Signals | Market | Assist tabs
+- **Multi-chain Support**: Base, Ethereum, Solana, BSC
+- **Wallet Detection**: MetaMask, Phantom, Solflare
+- **Signal Overlay**: Recent alerts with severity badges
+- **Trending Tokens**: Top boosted tokens in popup
 
 ### Clanker Support
 
@@ -357,8 +370,19 @@ pnpm lint
 - ✅ Watchlist API routes
 - ✅ Launchpad tokens API routes
 
-### v0.3 (Planned)
-- [ ] DEX transaction building (assist mode)
+### v0.3.1 (Current) - Apple Liquid Glass UI
+- ✅ **Apple Liquid Glass UI** - iOS 26 inspired design system
+- ✅ **Dexscreener Integration** - Full API: tokens, pairs, boosts, search, trending
+- ✅ **Assist Mode** - Quick actions: swap links, copy addresses, DEX/scanner links
+- ✅ **Tabbed Overlay Interface** - Signals | Market | Assist tabs
+- ✅ **Market Data in Overlays** - Price, volume, liquidity, market cap from Dexscreener
+- ✅ **Enhanced Popup** - Trending tokens, quick links, improved stats
+- ✅ **Solana Overlay Redesign** - Wallet detection, market data, Liquid Glass styling
+- ✅ **Four.meme Overlay Redesign** - BSC chain support with Liquid Glass
+- ✅ **Options Page Capabilities** - Full feature showcase
+
+### v0.4 (Planned)
+- [ ] DEX transaction building (full assist mode)
 - [ ] Wallet signature flow
 - [ ] More CEX connectors (Kraken, Coinbase)
 - [ ] Strategy backtesting
