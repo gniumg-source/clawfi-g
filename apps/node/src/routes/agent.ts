@@ -369,10 +369,10 @@ export async function registerAgentRoutes(fastify: FastifyInstance): Promise<voi
               } else {
                 const rating = await aiService.rateSignal({
                   id: signal.id,
-                  signalType: signal.signalType,
+                  signalType: signal.signalType ?? 'unknown',
                   severity: signal.severity,
-                  message: signal.message,
-                  tokenAddress: signal.tokenAddress ?? undefined,
+                  message: signal.summary,
+                  token: signal.token ?? undefined,
                   tokenSymbol: signal.tokenSymbol ?? undefined,
                   chain: signal.chain ?? undefined,
                 });
@@ -618,10 +618,10 @@ export async function registerAgentRoutes(fastify: FastifyInstance): Promise<voi
 
       const rating = await aiService.rateSignal({
         id: signal.id,
-        signalType: signal.signalType,
+        signalType: signal.signalType ?? 'unknown',
         severity: signal.severity,
-        message: signal.message,
-        tokenAddress: signal.tokenAddress ?? undefined,
+        message: signal.summary,
+        token: signal.token ?? undefined,
         tokenSymbol: signal.tokenSymbol ?? undefined,
         chain: signal.chain ?? undefined,
       });

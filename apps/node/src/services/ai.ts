@@ -101,7 +101,7 @@ export class AIService {
     // Fetch recent signals for this token
     const signals = await this.prisma.signal.findMany({
       where: {
-        tokenAddress: tokenData.address.toLowerCase(),
+        token: tokenData.address.toLowerCase(),
       },
       orderBy: { ts: 'desc' },
       take: 10,
@@ -110,7 +110,7 @@ export class AIService {
     const signalsSummary = signals.map(s => ({
       type: s.signalType,
       severity: s.severity,
-      message: s.message,
+      message: s.summary,
       ts: s.ts,
     }));
 
@@ -184,7 +184,7 @@ Provide your analysis in the following JSON format ONLY (no markdown, no explana
     signalType: string;
     severity: string;
     message: string;
-    tokenAddress?: string;
+    token?: string;
     tokenSymbol?: string;
     chain?: string;
   }): Promise<SignalRating> {
@@ -198,7 +198,7 @@ SIGNAL:
 - Type: ${signal.signalType}
 - Severity: ${signal.severity}
 - Message: ${signal.message}
-- Token: ${signal.tokenSymbol || signal.tokenAddress || 'N/A'}
+- Token: ${signal.tokenSymbol || signal.token || 'N/A'}
 - Chain: ${signal.chain || 'N/A'}
 
 Rate this signal in the following JSON format ONLY:
@@ -253,7 +253,7 @@ Rate this signal in the following JSON format ONLY:
       this.prisma.signal.findMany({
         orderBy: { ts: 'desc' },
         take: 5,
-        select: { signalType: true, message: true, tokenSymbol: true, severity: true },
+        select: { signalType: true, summary: true, tokenSymbol: true, severity: true },
       }),
       this.prisma.watchedToken.findMany({
         where: { enabled: true },
@@ -265,7 +265,7 @@ Rate this signal in the following JSON format ONLY:
     const contextStr = `
 CURRENT CONTEXT:
 - Watched Tokens: ${watchedTokens.map(t => t.tokenSymbol || t.tokenAddress).join(', ') || 'None'}
-- Recent Signals: ${recentSignals.map(s => `[${s.severity}] ${s.signalType}: ${s.message}`).join('; ') || 'None'}
+- Recent Signals: ${recentSignals.map(s => `[${s.severity}] ${s.signalType}: ${s.summary}`).join('; ') || 'None'}
 ${context?.watchedTokens ? `- User Portfolio: ${context.watchedTokens.join(', ')}` : ''}
 `;
 
