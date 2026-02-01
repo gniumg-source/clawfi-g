@@ -5,10 +5,50 @@
  * - Token analysis and risk assessment
  * - Signal rating and prioritization
  * - Trading advice and recommendations
+ * - DexScreener market data integration
  */
 
 import OpenAI from 'openai';
 import type { PrismaClient } from '@prisma/client';
+
+// ============================================
+// DexScreener API Types & Helpers
+// ============================================
+
+const DEXSCREENER_API = 'https://api.dexscreener.com';
+
+interface DexScreenerPair {
+  chainId: string;
+  pairAddress: string;
+  baseToken: { address: string; name: string; symbol: string };
+  quoteToken: { address: string; name: string; symbol: string };
+  priceUsd?: string;
+  priceChange?: { h24?: number; h6?: number; h1?: number };
+  volume?: { h24?: number };
+  liquidity?: { usd?: number };
+  fdv?: number;
+  txns?: { h24?: { buys: number; sells: number } };
+}
+
+interface DexScreenerBoost {
+  chainId: string;
+  tokenAddress: string;
+  icon?: string;
+  description?: string;
+  amount?: number;
+}
+
+async function fetchDexScreener<T>(endpoint: string): Promise<T | null> {
+  try {
+    const response = await fetch(`${DEXSCREENER_API}${endpoint}`, {
+      headers: { 'Accept': 'application/json', 'User-Agent': 'ClawFi/0.2.0' },
+    });
+    if (!response.ok) return null;
+    return await response.json() as T;
+  } catch {
+    return null;
+  }
+}
 
 // ============================================
 // Types
@@ -88,6 +128,97 @@ export class AIService {
    */
   isAvailable(): boolean {
     return this.openai !== null;
+  }
+
+  /**
+   * Fetch trending tokens from DexScreener (boosted tokens)
+   */
+  async getDexScreenerTrending(): Promise<Array<{
+    chain: string;
+    symbol: string;
+    address: string;
+    boosts: number;
+  }>> {
+    try {
+      const data = await fetchDexScreener<DexScreenerBoost[]>('/token-boosts/top/v1');
+      if (!data || !Array.isArray(data)) return [];
+      
+      return data.slice(0, 15).map(token => ({
+        chain: token.chainId,
+        symbol: token.tokenAddress.slice(0, 8),
+        address: token.tokenAddress,
+        boosts: token.amount || 0,
+      }));
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Fetch token data from DexScreener
+   */
+  async getDexScreenerToken(address: string): Promise<{
+    symbol: string;
+    name: string;
+    chain: string;
+    priceUsd: number;
+    priceChange24h: number;
+    volume24h: number;
+    liquidity: number;
+    fdv: number;
+    buys24h: number;
+    sells24h: number;
+  } | null> {
+    try {
+      const data = await fetchDexScreener<{ pairs?: DexScreenerPair[] }>(`/latest/dex/tokens/${address}`);
+      if (!data?.pairs?.[0]) return null;
+      
+      const pair = data.pairs[0];
+      return {
+        symbol: pair.baseToken.symbol,
+        name: pair.baseToken.name,
+        chain: pair.chainId,
+        priceUsd: parseFloat(pair.priceUsd || '0'),
+        priceChange24h: pair.priceChange?.h24 || 0,
+        volume24h: pair.volume?.h24 || 0,
+        liquidity: pair.liquidity?.usd || 0,
+        fdv: pair.fdv || 0,
+        buys24h: pair.txns?.h24?.buys || 0,
+        sells24h: pair.txns?.h24?.sells || 0,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Search tokens on DexScreener
+   */
+  async searchDexScreener(query: string): Promise<Array<{
+    symbol: string;
+    name: string;
+    chain: string;
+    address: string;
+    priceUsd: number;
+    priceChange24h: number;
+    liquidity: number;
+  }>> {
+    try {
+      const data = await fetchDexScreener<{ pairs?: DexScreenerPair[] }>(`/latest/dex/search?q=${encodeURIComponent(query)}`);
+      if (!data?.pairs) return [];
+      
+      return data.pairs.slice(0, 10).map(pair => ({
+        symbol: pair.baseToken.symbol,
+        name: pair.baseToken.name,
+        chain: pair.chainId,
+        address: pair.baseToken.address,
+        priceUsd: parseFloat(pair.priceUsd || '0'),
+        priceChange24h: pair.priceChange?.h24 || 0,
+        liquidity: pair.liquidity?.usd || 0,
+      }));
+    } catch {
+      return [];
+    }
   }
 
   /**
@@ -267,8 +398,8 @@ Rate this signal in the following JSON format ONLY:
       throw new Error('AI service not configured. Set OPENAI_API_KEY in environment.');
     }
 
-    // Get comprehensive context from the database - all chains and launchpads
-    const [recentSignals, watchedTokens, recentLaunches] = await Promise.all([
+    // Get comprehensive context from the database AND DexScreener - all chains and launchpads
+    const [recentSignals, watchedTokens, recentLaunches, dexTrending] = await Promise.all([
       this.prisma.signal.findMany({
         orderBy: { ts: 'desc' },
         take: 10,
@@ -292,6 +423,8 @@ Rate this signal in the following JSON format ONLY:
           createdAt: true 
         },
       }),
+      // Get DexScreener trending tokens
+      this.getDexScreenerTrending(),
     ]);
 
     // Group launches by launchpad
@@ -307,27 +440,48 @@ Rate this signal in the following JSON format ONLY:
         `${platform}: ${tokens.slice(0, 5).map(t => t.tokenSymbol || t.tokenName || t.tokenAddress.slice(0, 10)).join(', ')}`
       ).join('\n  ');
 
+    // Group DexScreener trending by chain
+    const dexByChain: Record<string, typeof dexTrending> = {};
+    for (const token of dexTrending) {
+      if (!dexByChain[token.chain]) dexByChain[token.chain] = [];
+      dexByChain[token.chain].push(token);
+    }
+
+    const dexContext = Object.entries(dexByChain)
+      .map(([chain, tokens]) => 
+        `${chain}: ${tokens.slice(0, 3).map(t => `${t.address.slice(0, 10)} (${t.boosts} boosts)`).join(', ')}`
+      ).join('\n  ');
+
     const contextStr = `
 CURRENT CONTEXT:
 - Watched Tokens: ${watchedTokens.map(t => `${t.tokenSymbol || t.tokenAddress} (${t.chain})`).join(', ') || 'None'}
 - Recent Signals: ${recentSignals.map(s => `[${s.severity}/${s.chain || 'unknown'}] ${s.signalType}: ${s.summary}`).join('; ') || 'None'}
 - Recent Launches by Platform:
   ${launchpadContext || 'No recent launches'}
+- DexScreener Trending (by chain):
+  ${dexContext || 'No trending data'}
 ${context?.watchedTokens ? `- User Portfolio: ${context.watchedTokens.join(', ')}` : ''}
 `;
 
-    const prompt = `You are Clawf, ClawFi's crypto trading advisor. You help users make informed decisions about DeFi trading across multiple chains and launchpads:
+    const prompt = `You are Clawf, ClawFi's crypto trading advisor. You help users make informed decisions about DeFi trading across multiple chains and launchpads.
+
+DATA SOURCES:
+- DexScreener - Real-time market data, trending tokens, price/volume across 80+ chains
+- Launchpad tokens - New launches from Clanker, Four.meme, Pump.fun
+- Internal signals - Risk alerts, whale movements, liquidity changes
 
 SUPPORTED PLATFORMS:
 - Clanker (Base) - Base chain token launchpad
 - Four.meme (BSC) - BNB Smart Chain meme token launchpad  
 - Pump.fun (Solana) - Solana meme token launchpad
+- DexScreener - Universal market data aggregator
 
 SUPPORTED CHAINS:
 - Base (EVM) - Layer 2 on Ethereum
 - BSC/BNB Smart Chain (EVM) - Binance's chain
 - Solana - High-speed non-EVM chain
 - Ethereum - Main EVM chain
+- And 80+ more chains via DexScreener
 
 ${contextStr}
 
