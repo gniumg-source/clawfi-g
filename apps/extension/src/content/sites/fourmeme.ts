@@ -7,6 +7,15 @@
 
 const VERSION = '0.3.1';
 
+// Get extension icon URL
+function getIconUrl(size: number = 48): string {
+  try {
+    return chrome.runtime.getURL(`icons/icon${size}.png`);
+  } catch {
+    return '';
+  }
+}
+
 interface FourMemeTokenInfo {
   address: string;
   name?: string;
@@ -127,6 +136,15 @@ function getStyles(): string {
     }
     
     .clawfi-fm-fab-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      object-fit: contain;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .clawfi-fm-fab-icon-emoji {
       font-size: 28px;
       position: relative;
       z-index: 1;
@@ -457,19 +475,23 @@ function getStyles(): string {
 
 // Create overlay HTML
 function createOverlay(token: FourMemeTokenInfo): HTMLElement {
+  const iconUrl = getIconUrl(48);
   const overlay = document.createElement('div');
   overlay.id = 'clawfi-fourmeme-overlay';
   overlay.innerHTML = `
     <style>${getStyles()}</style>
     
     <button class="clawfi-fm-fab" id="clawfi-fm-toggle">
-      <span class="clawfi-fm-fab-icon">🦀</span>
+      ${iconUrl ? `<img class="clawfi-fm-fab-icon" src="${iconUrl}" alt="ClawFi">` : '<span class="clawfi-fm-fab-icon-emoji">🦀</span>'}
       <div class="clawfi-fm-badge" id="clawfi-fm-badge">0</div>
     </button>
     
     <div class="clawfi-fm-panel" id="clawfi-fm-panel">
       <div class="clawfi-fm-header">
-        <span class="clawfi-fm-header-title">🦀 ClawFi • BSC</span>
+        <span class="clawfi-fm-header-title">
+          ${iconUrl ? `<img src="${iconUrl}" style="width: 20px; height: 20px; margin-right: 8px; border-radius: 4px; vertical-align: middle;">` : '🦀 '}
+          ClawFi • BSC
+        </span>
         <button class="clawfi-fm-close" id="clawfi-fm-close">×</button>
       </div>
       

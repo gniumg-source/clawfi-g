@@ -10,6 +10,15 @@ import { createRoot } from 'react-dom/client';
 
 const VERSION = '0.3.1';
 
+// Get extension icon URL
+function getIconUrl(size: number = 48): string {
+  try {
+    return chrome.runtime.getURL(`icons/icon${size}.png`);
+  } catch {
+    return '';
+  }
+}
+
 // Solana address regex (base58 encoded, 32-44 chars)
 const SOLANA_ADDRESS_REGEX = /[1-9A-HJ-NP-Za-km-z]{32,44}/g;
 
@@ -129,6 +138,14 @@ const glassStyles = {
     overflow: 'hidden' as const,
   },
   fabIcon: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '8px',
+    objectFit: 'contain' as const,
+    position: 'relative' as const,
+    zIndex: 1,
+  },
+  fabIconEmoji: {
     fontSize: '28px',
     position: 'relative' as const,
     zIndex: 1,
@@ -367,6 +384,7 @@ function ClawFiSolanaOverlay() {
   const [enabled, setEnabled] = useState(true);
   const [wallets, setWallets] = useState({ phantom: false, solflare: false });
   const [activeTab, setActiveTab] = useState<'signals' | 'market'>('signals');
+  const iconUrl = getIconUrl(48);
 
   useEffect(() => {
     // Check settings
@@ -465,7 +483,11 @@ function ClawFiSolanaOverlay() {
             e.currentTarget.style.transform = 'scale(1)';
           }}
         >
-          <span style={glassStyles.fabIcon}>🦀</span>
+          {iconUrl ? (
+            <img style={glassStyles.fabIcon} src={iconUrl} alt="ClawFi" />
+          ) : (
+            <span style={glassStyles.fabIconEmoji}>🦀</span>
+          )}
           {signals.length > 0 && (
             <span style={glassStyles.badge}>{signals.length}</span>
           )}
@@ -477,7 +499,10 @@ function ClawFiSolanaOverlay() {
         <div style={glassStyles.panel}>
           {/* Header */}
           <div style={glassStyles.header}>
-            <span style={glassStyles.headerTitle}>🦀 ClawFi • Solana</span>
+            <span style={glassStyles.headerTitle}>
+              {iconUrl && <img src={iconUrl} alt="" style={{ width: '20px', height: '20px', marginRight: '8px', borderRadius: '4px' }} />}
+              ClawFi • Solana
+            </span>
             <button
               onClick={() => setExpanded(false)}
               style={glassStyles.closeBtn}

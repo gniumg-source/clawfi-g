@@ -73,6 +73,15 @@ const SHADOW_HOST_ID = 'clawfi-clanker-overlay';
 const BASESCAN_URL = 'https://basescan.org/address/';
 const VERSION = '0.3.1';
 
+// Get extension icon URL
+function getIconUrl(size: number = 48): string {
+  try {
+    return chrome.runtime.getURL(`icons/icon${size}.png`);
+  } catch {
+    return '';
+  }
+}
+
 let shadowHost: HTMLDivElement | null = null;
 let shadowRoot: ShadowRoot | null = null;
 let state: OverlayState | null = null;
@@ -309,6 +318,15 @@ function getOverlayStyles(): string {
     }
     
     .clawfi-fab-icon {
+      width: 36px;
+      height: 36px;
+      position: relative;
+      z-index: 1;
+      border-radius: 8px;
+      object-fit: contain;
+    }
+    
+    .clawfi-fab-icon-emoji {
       font-size: 28px;
       position: relative;
       z-index: 1;
@@ -413,6 +431,13 @@ function getOverlayStyles(): string {
       font-size: 17px;
       display: flex;
       align-items: center;
+    }
+    
+    .clawfi-header-logo {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      object-fit: contain;
       gap: 10px;
       position: relative;
       z-index: 1;
@@ -1062,6 +1087,9 @@ function getOverlayStyles(): string {
 function generateOverlayHTML(state: OverlayState): string {
   const { metadata, signals, badges, loading, error, expanded, closed, activeTab } = state;
   
+  // Get icon URL for the overlay
+  const iconUrl = getIconUrl(48);
+  
   if (closed) {
     return '';
   }
@@ -1074,7 +1102,7 @@ function generateOverlayHTML(state: OverlayState): string {
     return `
       <div class="clawfi-overlay">
         <button class="clawfi-fab ${riskCount > 0 ? 'clawfi-fab-risk' : ''}" data-action="expand">
-          <span class="clawfi-fab-icon">🦀</span>
+          ${iconUrl ? `<img class="clawfi-fab-icon" src="${iconUrl}" alt="ClawFi">` : '<span class="clawfi-fab-icon-emoji">🦀</span>'}
           ${signals.length > 0 ? `<span class="clawfi-fab-badge">${signals.length}</span>` : ''}
           ${riskCount > 0 ? `<span class="clawfi-fab-risk-dot"></span>` : ''}
         </button>
@@ -1226,7 +1254,7 @@ function generateOverlayHTML(state: OverlayState): string {
       <div class="clawfi-panel">
         <div class="clawfi-header">
           <div class="clawfi-header-title">
-            <span>🦀</span>
+            ${iconUrl ? `<img class="clawfi-header-logo" src="${iconUrl}" alt="">` : '<span>🦀</span>'}
             <span>${metadata.symbol || metadata.name || 'ClawFi'}</span>
           </div>
           <div class="clawfi-header-actions">

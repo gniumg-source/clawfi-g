@@ -10,6 +10,15 @@ import { createRoot } from 'react-dom/client';
 
 console.log('[ClawFi] General content script loaded on:', window.location.href);
 
+// Get extension icon URL
+function getIconUrl(size: number = 48): string {
+  try {
+    return chrome.runtime.getURL(`icons/icon${size}.png`);
+  } catch {
+    return '';
+  }
+}
+
 // Ethereum address regex
 const ETH_ADDRESS_REGEX = /0x[a-fA-F0-9]{40}/g;
 
@@ -171,6 +180,9 @@ function ClawFiOverlay() {
   const [expanded, setExpanded] = useState(false);
   const [enabled, setEnabled] = useState(true);
   const [settings, setSettings] = useState<Settings | null>(null);
+  
+  // Get icon URL for the overlay
+  const iconUrl = getIconUrl(48);
 
   useEffect(() => {
     // Check settings
@@ -270,7 +282,11 @@ function ClawFiOverlay() {
             transition: 'all 0.2s ease',
           }}
         >
-          <span style={{ fontSize: '26px' }}>🦀</span>
+          {iconUrl ? (
+            <img src={iconUrl} alt="ClawFi" style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'contain' }} />
+          ) : (
+            <span style={{ fontSize: '26px' }}>🦀</span>
+          )}
           {signals.length > 0 && (
             <span
               style={{
@@ -321,7 +337,11 @@ function ClawFiOverlay() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', zIndex: 1 }}>
-              <span style={{ fontSize: '20px' }}>🦀</span>
+              {iconUrl ? (
+                <img src={iconUrl} alt="" style={{ width: '20px', height: '20px', borderRadius: '4px' }} />
+              ) : (
+                <span style={{ fontSize: '20px' }}>🦀</span>
+              )}
               <span style={{ fontWeight: '600', color: 'white', fontSize: '16px', letterSpacing: '-0.3px' }}>
                 ClawFi
               </span>
