@@ -1,20 +1,867 @@
-/* ClawFi Extension Content Script Styles */
+/**
+ * ClawFi Extension - Liquid Glass Design System
+ * 
+ * Premium UI styles for content script overlays
+ * Design: Apple Liquid Glass (iOS 26 / macOS Tahoe)
+ */
 
-#clawfi-overlay-root {
+/* ============================================
+   CSS VARIABLES
+   ============================================ */
+
+:root {
+  --clawfi-glass-bg: rgba(20, 20, 28, 0.85);
+  --clawfi-glass-bg-elevated: rgba(35, 35, 45, 0.92);
+  --clawfi-glass-border: rgba(255, 255, 255, 0.15);
+  --clawfi-glass-border-light: rgba(255, 255, 255, 0.08);
+  --clawfi-blur: 40px;
+  --clawfi-blur-heavy: 60px;
+  
+  /* Accent Colors */
+  --clawfi-accent: #0A84FF;
+  --clawfi-accent-gradient: linear-gradient(135deg, #0A84FF 0%, #5856D6 100%);
+  --clawfi-success: #30D158;
+  --clawfi-danger: #FF453A;
+  --clawfi-warning: #FF9F0A;
+  --clawfi-purple: #BF5AF2;
+  --clawfi-teal: #64D2FF;
+  
+  /* Text Colors */
+  --clawfi-text-primary: rgba(255, 255, 255, 0.95);
+  --clawfi-text-secondary: rgba(255, 255, 255, 0.65);
+  --clawfi-text-tertiary: rgba(255, 255, 255, 0.4);
+  
+  /* Shadows */
+  --clawfi-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --clawfi-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --clawfi-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --clawfi-shadow-glow: 0 0 40px rgba(10, 132, 255, 0.3);
+}
+
+/* ============================================
+   OVERLAY ROOT
+   ============================================ */
+
+#clawfi-overlay-root,
+#clawfi-solana-overlay-root {
   position: fixed;
   bottom: 0;
   right: 0;
-  z-index: 999999;
+  z-index: 2147483647;
   pointer-events: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-#clawfi-overlay-root > * {
+#clawfi-overlay-root > *,
+#clawfi-solana-overlay-root > * {
   pointer-events: auto;
 }
 
-/* Reset styles for overlay */
-#clawfi-overlay-root * {
+#clawfi-overlay-root *,
+#clawfi-solana-overlay-root * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
+/* ============================================
+   KEYFRAME ANIMATIONS
+   ============================================ */
 
+@keyframes clawfi-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes clawfi-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes clawfi-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(10, 132, 255, 0.4);
+  }
+  50% { 
+    box-shadow: 0 0 0 8px rgba(10, 132, 255, 0);
+  }
+}
+
+@keyframes clawfi-glow-pulse {
+  0%, 100% { 
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+  50% { 
+    filter: drop-shadow(0 0 16px currentColor);
+  }
+}
+
+@keyframes clawfi-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes clawfi-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.clawfi-glass {
+  background: var(--clawfi-glass-bg);
+  backdrop-filter: blur(var(--clawfi-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--clawfi-blur)) saturate(180%);
+  border: 1px solid var(--clawfi-glass-border);
+}
+
+.clawfi-glass-elevated {
+  background: var(--clawfi-glass-bg-elevated);
+  backdrop-filter: blur(var(--clawfi-blur-heavy)) saturate(200%);
+  -webkit-backdrop-filter: blur(var(--clawfi-blur-heavy)) saturate(200%);
+  border: 1px solid var(--clawfi-glass-border);
+}
+
+.clawfi-specular {
+  position: relative;
+}
+
+.clawfi-specular::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.08) 20%,
+    transparent 50%
+  );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+
+.clawfi-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.clawfi-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.clawfi-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.clawfi-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ============================================
+   FAB (Floating Action Button)
+   ============================================ */
+
+.clawfi-fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--clawfi-accent-gradient);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 8px 32px rgba(10, 132, 255, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.clawfi-fab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.1) 30%,
+    transparent 50%
+  );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.clawfi-fab:hover {
+  transform: scale(1.08) translateY(-3px);
+  box-shadow: 
+    0 12px 40px rgba(10, 132, 255, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.clawfi-fab:active {
+  transform: scale(0.98);
+}
+
+.clawfi-fab-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  position: relative;
+  z-index: 1;
+  object-fit: contain;
+}
+
+.clawfi-fab-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--clawfi-danger);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  box-shadow: 0 2px 8px rgba(255, 69, 58, 0.5);
+  z-index: 2;
+}
+
+.clawfi-fab-risk {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: 0 0 12px currentColor;
+  z-index: 2;
+  animation: clawfi-glow-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   PANEL
+   ============================================ */
+
+.clawfi-panel {
+  width: 360px;
+  background: var(--clawfi-glass-bg);
+  backdrop-filter: blur(var(--clawfi-blur-heavy)) saturate(200%);
+  -webkit-backdrop-filter: blur(var(--clawfi-blur-heavy)) saturate(200%);
+  border-radius: 24px;
+  border: 1px solid var(--clawfi-glass-border);
+  box-shadow: var(--clawfi-shadow-lg), var(--clawfi-shadow-glow);
+  overflow: hidden;
+  animation: clawfi-slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.clawfi-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+/* Panel Header */
+.clawfi-panel-header {
+  padding: 16px 20px;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 132, 255, 0.85) 0%,
+    rgba(10, 100, 200, 0.9) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.clawfi-panel-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.08) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.clawfi-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: white;
+  font-size: 16px;
+  letter-spacing: -0.3px;
+  position: relative;
+  z-index: 1;
+}
+
+.clawfi-panel-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.clawfi-panel-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.clawfi-panel-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* Panel Tabs */
+.clawfi-panel-tabs {
+  display: flex;
+  padding: 12px 16px;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--clawfi-glass-border-light);
+}
+
+.clawfi-panel-tab {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--clawfi-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.clawfi-panel-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.clawfi-panel-tab.active {
+  background: rgba(10, 132, 255, 0.25);
+  color: white;
+  border-color: rgba(10, 132, 255, 0.5);
+}
+
+.clawfi-panel-tab-badge {
+  background: var(--clawfi-danger);
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* Panel Body */
+.clawfi-panel-body {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Panel Section */
+.clawfi-panel-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--clawfi-glass-border-light);
+}
+
+.clawfi-panel-section:last-child {
+  border-bottom: none;
+}
+
+.clawfi-panel-section-title {
+  font-size: 11px;
+  color: var(--clawfi-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+/* Panel Footer */
+.clawfi-panel-footer {
+  padding: 14px 20px;
+  background: rgba(0, 0, 0, 0.25);
+  border-top: 1px solid var(--clawfi-glass-border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.clawfi-panel-footer-text {
+  font-size: 11px;
+  color: var(--clawfi-text-tertiary);
+}
+
+/* ============================================
+   DATA GRID
+   ============================================ */
+
+.clawfi-data-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.clawfi-data-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--clawfi-glass-border-light);
+  transition: all 0.2s ease;
+}
+
+.clawfi-data-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--clawfi-glass-border);
+}
+
+.clawfi-data-label {
+  font-size: 10px;
+  color: var(--clawfi-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.clawfi-data-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--clawfi-text-primary);
+}
+
+.clawfi-data-sub {
+  font-size: 11px;
+  color: var(--clawfi-text-secondary);
+  margin-top: 2px;
+}
+
+.clawfi-data-sub.positive { color: var(--clawfi-success); }
+.clawfi-data-sub.negative { color: var(--clawfi-danger); }
+
+/* ============================================
+   BADGES & PILLS
+   ============================================ */
+
+.clawfi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+}
+
+.clawfi-badge-chain {
+  background: rgba(10, 132, 255, 0.2);
+  color: var(--clawfi-teal);
+  border: 1px solid rgba(10, 132, 255, 0.35);
+}
+
+.clawfi-badge-safe {
+  background: rgba(48, 209, 88, 0.2);
+  color: var(--clawfi-success);
+  border: 1px solid rgba(48, 209, 88, 0.35);
+}
+
+.clawfi-badge-warning {
+  background: rgba(255, 159, 10, 0.2);
+  color: var(--clawfi-warning);
+  border: 1px solid rgba(255, 159, 10, 0.35);
+}
+
+.clawfi-badge-danger {
+  background: rgba(255, 69, 58, 0.2);
+  color: var(--clawfi-danger);
+  border: 1px solid rgba(255, 69, 58, 0.35);
+}
+
+/* Risk Badge */
+.clawfi-risk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.clawfi-risk-badge.safe {
+  background: rgba(48, 209, 88, 0.12);
+  border: 1px solid rgba(48, 209, 88, 0.3);
+}
+
+.clawfi-risk-badge.low {
+  background: rgba(10, 132, 255, 0.12);
+  border: 1px solid rgba(10, 132, 255, 0.3);
+}
+
+.clawfi-risk-badge.medium {
+  background: rgba(255, 214, 10, 0.12);
+  border: 1px solid rgba(255, 214, 10, 0.3);
+}
+
+.clawfi-risk-badge.high {
+  background: rgba(255, 159, 10, 0.12);
+  border: 1px solid rgba(255, 159, 10, 0.3);
+}
+
+.clawfi-risk-badge.critical {
+  background: rgba(255, 69, 58, 0.12);
+  border: 1px solid rgba(255, 69, 58, 0.3);
+}
+
+.clawfi-risk-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.clawfi-risk-badge.safe .clawfi-risk-dot { background: var(--clawfi-success); box-shadow: 0 0 10px var(--clawfi-success); }
+.clawfi-risk-badge.low .clawfi-risk-dot { background: var(--clawfi-accent); box-shadow: 0 0 10px var(--clawfi-accent); }
+.clawfi-risk-badge.medium .clawfi-risk-dot { background: #FFD60A; box-shadow: 0 0 10px #FFD60A; }
+.clawfi-risk-badge.high .clawfi-risk-dot { background: var(--clawfi-warning); box-shadow: 0 0 10px var(--clawfi-warning); }
+.clawfi-risk-badge.critical .clawfi-risk-dot { background: var(--clawfi-danger); box-shadow: 0 0 10px var(--clawfi-danger); }
+
+.clawfi-risk-text {
+  flex: 1;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--clawfi-text-primary);
+}
+
+.clawfi-risk-score {
+  font-size: 12px;
+  color: var(--clawfi-text-secondary);
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.clawfi-btn {
+  padding: 12px 20px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.clawfi-btn-primary {
+  background: rgba(10, 132, 255, 0.5);
+  border: 1px solid rgba(10, 132, 255, 0.6);
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.clawfi-btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.clawfi-btn-primary:hover {
+  background: rgba(10, 132, 255, 0.65);
+  transform: scale(1.02);
+  box-shadow: 0 4px 20px rgba(10, 132, 255, 0.4);
+}
+
+.clawfi-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--clawfi-glass-border);
+  color: var(--clawfi-text-primary);
+  backdrop-filter: blur(10px);
+}
+
+.clawfi-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(1.02);
+}
+
+/* ============================================
+   SIGNALS LIST
+   ============================================ */
+
+.clawfi-signals-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--clawfi-text-tertiary);
+}
+
+.clawfi-signals-empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+.clawfi-signal {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--clawfi-glass-border-light);
+  transition: background 0.2s ease;
+}
+
+.clawfi-signal:last-child {
+  border-bottom: none;
+}
+
+.clawfi-signal:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.clawfi-signal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.clawfi-signal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.clawfi-signal-dot.critical { color: var(--clawfi-danger); background: var(--clawfi-danger); }
+.clawfi-signal-dot.high { color: var(--clawfi-warning); background: var(--clawfi-warning); }
+.clawfi-signal-dot.medium { color: #FFD60A; background: #FFD60A; }
+.clawfi-signal-dot.low { color: var(--clawfi-accent); background: var(--clawfi-accent); }
+
+.clawfi-signal-title {
+  color: var(--clawfi-text-primary);
+  font-weight: 500;
+  font-size: 14px;
+  flex: 1;
+}
+
+.clawfi-signal-summary {
+  color: var(--clawfi-text-secondary);
+  font-size: 13px;
+  margin-left: 20px;
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.clawfi-signal-meta {
+  color: var(--clawfi-text-tertiary);
+  font-size: 11px;
+  margin-left: 20px;
+}
+
+/* ============================================
+   LOADING STATES
+   ============================================ */
+
+.clawfi-loading {
+  padding: 40px;
+  text-align: center;
+  color: var(--clawfi-text-tertiary);
+}
+
+.clawfi-spinner {
+  width: 32px;
+  height: 32px;
+  border: 2.5px solid var(--clawfi-glass-border);
+  border-top-color: var(--clawfi-accent);
+  border-radius: 50%;
+  animation: clawfi-spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+
+.clawfi-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: clawfi-shimmer 1.5s infinite;
+}
+
+/* ============================================
+   TOAST NOTIFICATIONS
+   ============================================ */
+
+.clawfi-toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(48, 209, 88, 0.95);
+  backdrop-filter: blur(20px);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 2147483648;
+  animation: clawfi-slide-up 0.3s ease, clawfi-fade-out 0.3s ease 1.7s forwards;
+  box-shadow: 0 8px 32px rgba(48, 209, 88, 0.4);
+}
+
+@keyframes clawfi-fade-out {
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+}
+
+/* ============================================
+   ADDRESS DISPLAY
+   ============================================ */
+
+.clawfi-address {
+  font-family: 'SF Mono', 'Menlo', Monaco, monospace;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  border: 1px solid var(--clawfi-glass-border-light);
+  color: var(--clawfi-text-primary);
+  letter-spacing: 0.02em;
+}
+
+.clawfi-copy-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--clawfi-glass-border-light);
+  color: var(--clawfi-text-secondary);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.clawfi-copy-btn:hover {
+  color: var(--clawfi-accent);
+  background: rgba(10, 132, 255, 0.15);
+  border-color: rgba(10, 132, 255, 0.3);
+}
+
+/* ============================================
+   LINKS
+   ============================================ */
+
+.clawfi-link {
+  color: var(--clawfi-accent);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.clawfi-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* ============================================
+   ASSIST MODE ACTIONS
+   ============================================ */
+
+.clawfi-assist-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 16px 20px;
+}
+
+.clawfi-assist-action {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--clawfi-glass-border-light);
+  border-radius: 14px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: block;
+}
+
+.clawfi-assist-action:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(10, 132, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.clawfi-assist-action-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.clawfi-assist-action-label {
+  color: var(--clawfi-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.clawfi-assist-action-desc {
+  color: var(--clawfi-text-tertiary);
+  font-size: 11px;
+}

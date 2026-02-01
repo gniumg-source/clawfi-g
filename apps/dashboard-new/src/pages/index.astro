@@ -3,22 +3,29 @@ import LayoutSidebar from '../app/LayoutSidebar.astro';
 import DashboardStats from '../components/DashboardStats';
 import RecentSignals from '../components/RecentSignals';
 import ConnectionsOverview from '../components/ConnectionsOverview';
+import MarketOverview from '../components/MarketOverview';
+import QuickStats from '../components/QuickStats';
+import TokenSearch from '../components/TokenSearch';
 ---
 
 <LayoutSidebar>
 	<div class="space-y-6">
 		<!-- Header -->
-		<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+		<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 			<div>
-				<h1 class="text-2xl font-bold text-white">Dashboard</h1>
-				<p class="text-gray-400">Monitor your crypto intelligence agent</p>
+				<h1 class="text-2xl font-bold text-white flex items-center gap-2">
+					<span class="text-3xl">🦀</span>
+					ClawFi Dashboard
+				</h1>
+				<p class="text-secondary mt-1">Your degen trading command center</p>
 			</div>
-			<div class="flex items-center gap-3">
+			<div class="flex items-center gap-4">
+				<TokenSearch client:load className="w-full lg:w-72" placeholder="Search tokens..." />
 				<button
 					id="refresh-btn"
-					class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-800 rounded-lg hover:bg-gray-700 border border-gray-700 transition-colors"
+					class="btn-glass px-4 py-2 flex items-center gap-2"
 				>
-					<svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
 					</svg>
 					Refresh
@@ -27,10 +34,10 @@ import ConnectionsOverview from '../components/ConnectionsOverview';
 		</div>
 
 		<!-- Kill Switch Alert -->
-		<div id="killswitch-alert" class="hidden p-4 rounded-lg bg-red-900/30 border border-red-700/50">
+		<div id="killswitch-alert" class="hidden card-glass p-4 bg-red-500/10 border-red-500/30">
 			<div class="flex items-center gap-4">
 				<div class="flex-shrink-0">
-					<svg class="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+					<svg class="w-6 h-6 text-red-400" fill="currentColor" viewBox="0 0 20 20">
 						<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
 					</svg>
 				</div>
@@ -38,9 +45,62 @@ import ConnectionsOverview from '../components/ConnectionsOverview';
 					<h3 class="text-lg font-semibold text-red-400">Kill Switch Active</h3>
 					<p class="text-sm text-red-300/70">All trading actions are blocked. Alerts continue to flow.</p>
 				</div>
-				<button id="disable-killswitch-btn" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+				<button id="disable-killswitch-btn" class="btn-glass bg-red-500/20 border-red-500/50 hover:bg-red-500/30">
 					Disable Kill Switch
 				</button>
+			</div>
+		</div>
+
+		<!-- Market Quick Stats -->
+		<QuickStats client:load />
+
+		<!-- Quick Actions Grid -->
+		<div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+			<a href="/market" class="card-glass p-4 hover:scale-[1.02] transition-all group text-center">
+				<span class="text-3xl">📊</span>
+				<p class="text-white font-medium mt-2 group-hover:text-primary transition-colors">Market</p>
+				<p class="text-tertiary text-xs">Live data</p>
+			</a>
+			<a href="/trending" class="card-glass p-4 hover:scale-[1.02] transition-all group text-center">
+				<span class="text-3xl">🔥</span>
+				<p class="text-white font-medium mt-2 group-hover:text-primary transition-colors">Trending</p>
+				<p class="text-tertiary text-xs">Hot tokens</p>
+			</a>
+			<a href="/watchlist" class="card-glass p-4 hover:scale-[1.02] transition-all group text-center">
+				<span class="text-3xl">⭐</span>
+				<p class="text-white font-medium mt-2 group-hover:text-primary transition-colors">Watchlist</p>
+				<p class="text-tertiary text-xs">Your tokens</p>
+			</a>
+			<a href="/launchpads" class="card-glass p-4 hover:scale-[1.02] transition-all group text-center">
+				<span class="text-3xl">🚀</span>
+				<p class="text-white font-medium mt-2 group-hover:text-primary transition-colors">Launchpads</p>
+				<p class="text-tertiary text-xs">New launches</p>
+			</a>
+			<a href="/signals" class="card-glass p-4 hover:scale-[1.02] transition-all group text-center">
+				<span class="text-3xl">🔔</span>
+				<p class="text-white font-medium mt-2 group-hover:text-primary transition-colors">Signals</p>
+				<p class="text-tertiary text-xs">Alerts</p>
+			</a>
+		</div>
+
+		<!-- Trending Section -->
+		<div class="card-glass overflow-hidden">
+			<div class="px-6 py-4 border-b border-white/10">
+				<div class="flex items-center justify-between">
+					<h2 class="text-lg font-semibold text-white flex items-center gap-2">
+						<span class="text-xl">🔥</span>
+						Trending Now
+					</h2>
+					<a href="/trending" class="text-sm text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+						View all
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+						</svg>
+					</a>
+				</div>
+			</div>
+			<div class="p-6">
+				<MarketOverview client:load />
 			</div>
 		</div>
 
@@ -50,16 +110,16 @@ import ConnectionsOverview from '../components/ConnectionsOverview';
 		<!-- Main Content Grid -->
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 			<!-- Recent Signals -->
-			<div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-				<div class="px-6 py-4 border-b border-gray-700">
+			<div class="card-glass overflow-hidden">
+				<div class="px-6 py-4 border-b border-white/10">
 					<div class="flex items-center justify-between">
 						<h2 class="text-lg font-semibold text-white flex items-center gap-2">
-							<svg class="w-5 h-5 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
+							<svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
 								<path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path>
 							</svg>
 							Recent Signals
 						</h2>
-						<a href="/signals" class="text-sm text-primary-400 hover:text-primary-300 transition-colors">
+						<a href="/signals" class="text-sm text-primary hover:text-primary/80 transition-colors">
 							View all →
 						</a>
 					</div>
@@ -68,16 +128,16 @@ import ConnectionsOverview from '../components/ConnectionsOverview';
 			</div>
 
 			<!-- Connections Overview -->
-			<div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-				<div class="px-6 py-4 border-b border-gray-700">
+			<div class="card-glass overflow-hidden">
+				<div class="px-6 py-4 border-b border-white/10">
 					<div class="flex items-center justify-between">
 						<h2 class="text-lg font-semibold text-white flex items-center gap-2">
-							<svg class="w-5 h-5 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
+							<svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
 								<path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
 							</svg>
 							Connections
 						</h2>
-						<a href="/connections" class="text-sm text-primary-400 hover:text-primary-300 transition-colors">
+						<a href="/connections" class="text-sm text-primary hover:text-primary/80 transition-colors">
 							Manage →
 						</a>
 					</div>
@@ -86,33 +146,57 @@ import ConnectionsOverview from '../components/ConnectionsOverview';
 			</div>
 		</div>
 
-		<!-- Quick Actions -->
-		<div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
-			<h2 class="text-lg font-semibold text-white mb-4">Quick Actions</h2>
+		<!-- External Links -->
+		<div class="card-glass p-6">
+			<h2 class="text-lg font-semibold text-white mb-4">Quick Links</h2>
 			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-				<a href="/agent" class="flex flex-col items-center p-4 rounded-lg bg-gray-700/50 hover:bg-gray-700 transition-colors group">
-					<svg class="w-8 h-8 text-primary-400 group-hover:text-primary-300 mb-2" fill="currentColor" viewBox="0 0 20 20">
-						<path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
-					</svg>
-					<span class="text-sm text-gray-300 group-hover:text-white">Agent Terminal</span>
+				<a 
+					href="https://dexscreener.com" 
+					target="_blank" 
+					rel="noopener noreferrer"
+					class="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+				>
+					<span class="text-2xl">📊</span>
+					<div>
+						<p class="text-white font-medium group-hover:text-primary transition-colors">Dexscreener</p>
+						<p class="text-tertiary text-xs">Charts & Data</p>
+					</div>
 				</a>
-				<a href="/connections" class="flex flex-col items-center p-4 rounded-lg bg-gray-700/50 hover:bg-gray-700 transition-colors group">
-					<svg class="w-8 h-8 text-primary-400 group-hover:text-primary-300 mb-2" fill="currentColor" viewBox="0 0 20 20">
-						<path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
-					</svg>
-					<span class="text-sm text-gray-300 group-hover:text-white">Add Connection</span>
+				<a 
+					href="https://jup.ag" 
+					target="_blank" 
+					rel="noopener noreferrer"
+					class="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+				>
+					<span class="text-2xl">🪐</span>
+					<div>
+						<p class="text-white font-medium group-hover:text-primary transition-colors">Jupiter</p>
+						<p class="text-tertiary text-xs">Solana Swap</p>
+					</div>
 				</a>
-				<a href="/strategies" class="flex flex-col items-center p-4 rounded-lg bg-gray-700/50 hover:bg-gray-700 transition-colors group">
-					<svg class="w-8 h-8 text-primary-400 group-hover:text-primary-300 mb-2" fill="currentColor" viewBox="0 0 20 20">
-						<path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"></path>
-					</svg>
-					<span class="text-sm text-gray-300 group-hover:text-white">Strategies</span>
+				<a 
+					href="https://pump.fun" 
+					target="_blank" 
+					rel="noopener noreferrer"
+					class="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+				>
+					<span class="text-2xl">🎰</span>
+					<div>
+						<p class="text-white font-medium group-hover:text-primary transition-colors">Pump.fun</p>
+						<p class="text-tertiary text-xs">Token Casino</p>
+					</div>
 				</a>
-				<a href="/risk" class="flex flex-col items-center p-4 rounded-lg bg-gray-700/50 hover:bg-gray-700 transition-colors group">
-					<svg class="w-8 h-8 text-primary-400 group-hover:text-primary-300 mb-2" fill="currentColor" viewBox="0 0 20 20">
-						<path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-					</svg>
-					<span class="text-sm text-gray-300 group-hover:text-white">Risk Controls</span>
+				<a 
+					href="https://clanker.world" 
+					target="_blank" 
+					rel="noopener noreferrer"
+					class="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+				>
+					<span class="text-2xl">🤖</span>
+					<div>
+						<p class="text-white font-medium group-hover:text-primary transition-colors">Clanker</p>
+						<p class="text-tertiary text-xs">Base Launches</p>
+					</div>
 				</a>
 			</div>
 		</div>

@@ -1,6 +1,6 @@
 {
 	"name": "@clawfi/dashboard",
-	"version": "0.1.0",
+	"version": "0.4.2",
 	"private": true,
 	"description": "ClawFi Admin Dashboard - Crypto Intelligence Agent Control Panel",
 	"type": "module",

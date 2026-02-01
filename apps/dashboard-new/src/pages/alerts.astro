@@ -1,0 +1,40 @@
+---
+import LayoutSidebar from '../app/LayoutSidebar.astro';
+import AlertsManager from '../components/AlertsManager';
+---
+
+<LayoutSidebar>
+	<div class="space-y-6">
+		<!-- Header -->
+		<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+			<div>
+				<h1 class="text-2xl font-bold text-white flex items-center gap-2">
+					<span class="text-3xl">🔔</span>
+					Price Alerts
+				</h1>
+				<p class="text-secondary mt-1">
+					Get notified when tokens hit your target price
+				</p>
+			</div>
+		</div>
+
+		<!-- Info Banner -->
+		<div class="card-glass p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/20">
+			<div class="flex items-start gap-3">
+				<div class="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+					<span class="text-xl">💡</span>
+				</div>
+				<div>
+					<h3 class="text-sm font-medium text-white">Browser Notifications</h3>
+					<p class="text-xs text-secondary mt-1">
+						Make sure to allow browser notifications to get alerted when your price targets are hit. 
+						Alerts are checked every 30 seconds while the dashboard is open.
+					</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- Alerts Component -->
+		<AlertsManager client:load />
+	</div>
+</LayoutSidebar>

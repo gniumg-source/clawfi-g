@@ -1,0 +1,27 @@
+{
+  "title": "ClawFi Documentation",
+  "description": "Official documentation for the ClawFi crypto intelligence platform",
+  "author": "ClawFi Team",
+  "language": "en",
+  "gitbook": ">=3.0.0",
+  "links": {
+    "sidebar": {
+      "GitHub": "https://github.com/ClawFiAI",
+      "Website": "https://clawfi.ai"
+    }
+  },
+  "plugins": [
+    "theme-default",
+    "search",
+    "code",
+    "highlight",
+    "copy-code-button"
+  ],
+  "pluginsConfig": {
+    "theme-default": {
+      "styles": {
+        "website": "styles/website.css"
+      }
+    }
+  }
+}

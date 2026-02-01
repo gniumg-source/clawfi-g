@@ -94,6 +94,8 @@ export default defineConfig({
         'content-solana': resolve(__dirname, 'src/content/content-solana.tsx'),
         clanker: resolve(__dirname, 'src/content/sites/clanker.ts'),
         fourmeme: resolve(__dirname, 'src/content/sites/fourmeme.ts'),
+        jupiter: resolve(__dirname, 'src/content/sites/jupiter.ts'),
+        pancakeswap: resolve(__dirname, 'src/content/sites/pancakeswap.ts'),
         'popup/popup': resolve(__dirname, 'src/popup/popup.ts'),
       },
       output: {

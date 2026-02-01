@@ -1,11 +1,16 @@
 {
   "manifest_version": 3,
   "name": "ClawFi",
-  "version": "0.3.1",
-  "description": "Injected UI Overlay for crypto intelligence - In-Page Extension Interface with Content Script UI Injection, DOM Overlay Toolbar/Panel, Augmented Page UI, and Client-side Page Augmentation across EVM & Solana",
-  "permissions": ["storage", "activeTab"],
+  "version": "0.4.2",
+  "description": "Premium degen trading assistant with Liquid Glass UI - Real-time token analysis, safety scores, whale tracking, swap quotes across 15+ chains. Supports Dexscreener, Jupiter, Uniswap, PancakeSwap, Pump.fun, Clanker, GeckoTerminal & more.",
+  "permissions": ["storage", "activeTab", "alarms"],
   "host_permissions": [
     "https://api.clawfi.ai/*",
+    "https://api.dexscreener.com/*",
+    "https://api.geckoterminal.com/*",
+    "https://api.jup.ag/*",
+    "https://tokens.jup.ag/*",
+    "https://api.1inch.dev/*",
     "https://etherscan.io/*",
     "https://*.etherscan.io/*",
     "https://dexscreener.com/*",
@@ -17,7 +22,14 @@
     "https://solscan.io/*",
     "https://pump.fun/*",
     "https://four.meme/*",
-    "https://clanker.world/*"
+    "https://clanker.world/*",
+    "https://jup.ag/*",
+    "https://www.dextools.io/*",
+    "https://pancakeswap.finance/*",
+    "https://birdeye.so/*",
+    "https://www.geckoterminal.com/*",
+    "https://defined.fi/*",
+    "https://dexscreener.com/*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -33,7 +45,10 @@
         "https://*.basescan.org/*",
         "https://arbiscan.io/*",
         "https://bscscan.com/*",
-        "https://*.bscscan.com/*"
+        "https://*.bscscan.com/*",
+        "https://www.dextools.io/*",
+        "https://defined.fi/*",
+        "https://www.geckoterminal.com/*"
       ],
       "js": ["content.js"],
       "css": ["content.css"],
@@ -42,7 +57,8 @@
     {
       "matches": [
         "https://solscan.io/*",
-        "https://pump.fun/*"
+        "https://pump.fun/*",
+        "https://birdeye.so/*"
       ],
       "js": ["content-solana.js"],
       "css": ["content.css"],
@@ -56,6 +72,16 @@
     {
       "matches": ["https://four.meme/*"],
       "js": ["fourmeme.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://jup.ag/*"],
+      "js": ["jupiter.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://pancakeswap.finance/*"],
+      "js": ["pancakeswap.js"],
       "run_at": "document_idle"
     }
   ],

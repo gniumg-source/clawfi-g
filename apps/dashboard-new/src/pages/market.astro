@@ -1,0 +1,70 @@
+---
+import LayoutSidebar from '../app/LayoutSidebar.astro';
+import MarketOverview from '../components/MarketOverview';
+import QuickStats from '../components/QuickStats';
+import TokenSearch from '../components/TokenSearch';
+---
+
+<LayoutSidebar>
+	<div class="space-y-6">
+		<!-- Header -->
+		<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+			<div>
+				<h1 class="text-2xl font-bold text-white flex items-center gap-2">
+					<span class="text-3xl">📊</span>
+					Market Overview
+				</h1>
+				<p class="text-secondary mt-1">
+					Real-time market data and token analytics across all chains
+				</p>
+			</div>
+			<div class="w-full md:w-auto">
+				<TokenSearch client:load className="w-full md:w-80" placeholder="Search any token..." />
+			</div>
+		</div>
+
+		<!-- Quick Stats -->
+		<QuickStats client:load />
+
+		<!-- Market Overview -->
+		<MarketOverview client:load />
+
+		<!-- Quick Links -->
+		<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+			<a 
+				href="/trending" 
+				class="card-glass p-4 hover:scale-[1.02] transition-all group text-center"
+			>
+				<span class="text-3xl">🔥</span>
+				<p class="text-white font-medium mt-2 group-hover:text-primary transition-colors">Trending</p>
+				<p class="text-tertiary text-xs mt-1">Hot tokens</p>
+			</a>
+			<a 
+				href="/watchlist" 
+				class="card-glass p-4 hover:scale-[1.02] transition-all group text-center"
+			>
+				<span class="text-3xl">⭐</span>
+				<p class="text-white font-medium mt-2 group-hover:text-primary transition-colors">Watchlist</p>
+				<p class="text-tertiary text-xs mt-1">Your tokens</p>
+			</a>
+			<a 
+				href="/launchpads" 
+				class="card-glass p-4 hover:scale-[1.02] transition-all group text-center"
+			>
+				<span class="text-3xl">🚀</span>
+				<p class="text-white font-medium mt-2 group-hover:text-primary transition-colors">Launchpads</p>
+				<p class="text-tertiary text-xs mt-1">New launches</p>
+			</a>
+			<a 
+				href="https://dexscreener.com/new-pairs" 
+				target="_blank"
+				rel="noopener noreferrer"
+				class="card-glass p-4 hover:scale-[1.02] transition-all group text-center"
+			>
+				<span class="text-3xl">🆕</span>
+				<p class="text-white font-medium mt-2 group-hover:text-primary transition-colors">New Pairs</p>
+				<p class="text-tertiary text-xs mt-1">Fresh pools</p>
+			</a>
+		</div>
+	</div>
+</LayoutSidebar>

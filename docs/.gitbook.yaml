@@ -1,0 +1,8 @@
+# GitBook Configuration
+# https://docs.gitbook.com/integrations/git-sync/content-configuration
+
+root: ./
+
+structure:
+  readme: README.md
+  summary: SUMMARY.md

@@ -4,32 +4,39 @@ import LayoutSidebar from '../app/LayoutSidebar.astro';
 
 <LayoutSidebar>
 	<div class="space-y-6">
+		<!-- Header -->
 		<div>
-			<h1 class="text-2xl font-bold text-white">Settings</h1>
-			<p class="text-gray-400">Configure your ClawFi instance</p>
+			<h1 class="text-2xl font-bold text-white flex items-center gap-2">
+				<span class="text-3xl">⚙️</span>
+				Settings
+			</h1>
+			<p class="text-secondary mt-1">Configure your ClawFi dashboard</p>
 		</div>
 
 		<!-- General Settings -->
-		<div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-			<div class="px-6 py-4 border-b border-gray-700">
-				<h2 class="text-lg font-semibold text-white">General</h2>
+		<div class="card-glass overflow-hidden">
+			<div class="px-6 py-4 border-b border-white/10">
+				<h2 class="text-lg font-semibold text-white flex items-center gap-2">
+					<span>🛠️</span>
+					General
+				</h2>
 			</div>
 			<div class="p-6 space-y-4">
 				<div>
-					<label class="block text-sm font-medium text-gray-300 mb-2">API URL</label>
+					<label class="block text-sm font-medium text-secondary mb-2">API URL</label>
 					<input
 						type="text"
 						id="api-url"
-						class="w-full px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-gray-300"
+						class="input-glass w-full"
 						readonly
 					/>
 				</div>
 				<div>
-					<label class="block text-sm font-medium text-gray-300 mb-2">Version</label>
+					<label class="block text-sm font-medium text-secondary mb-2">Dashboard Version</label>
 					<input
 						type="text"
-						value="0.1.0"
-						class="w-full px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-gray-300"
+						value="v0.4.2"
+						class="input-glass w-full"
 						readonly
 					/>
 				</div>
@@ -37,81 +44,171 @@ import LayoutSidebar from '../app/LayoutSidebar.astro';
 		</div>
 
 		<!-- Extension Token -->
-		<div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-			<div class="px-6 py-4 border-b border-gray-700">
-				<h2 class="text-lg font-semibold text-white">Browser Extension</h2>
+		<div class="card-glass overflow-hidden">
+			<div class="px-6 py-4 border-b border-white/10">
+				<h2 class="text-lg font-semibold text-white flex items-center gap-2">
+					<span>🧩</span>
+					Browser Extension
+				</h2>
 			</div>
 			<div class="p-6 space-y-4">
 				<div>
-					<label class="block text-sm font-medium text-gray-300 mb-2">Auth Token (for ClawFi Extension)</label>
+					<label class="block text-sm font-medium text-secondary mb-2">Auth Token (for ClawFi Extension)</label>
 					<div class="flex gap-2">
 						<input
 							type="text"
 							id="auth-token"
-							class="flex-1 px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-gray-300 font-mono text-xs"
+							class="input-glass flex-1 font-mono text-xs"
 							readonly
 						/>
-						<button id="copy-token-btn" class="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors whitespace-nowrap">
+						<button id="copy-token-btn" class="btn-glass btn-glass-primary whitespace-nowrap">
 							Copy Token
 						</button>
 					</div>
-					<p class="text-xs text-gray-500 mt-2">Paste this token in the ClawFi browser extension settings</p>
+					<p class="text-xs text-tertiary mt-2">Paste this token in the ClawFi browser extension settings</p>
+				</div>
+				
+				<div class="pt-4 border-t border-white/10">
+					<a 
+						href="chrome://extensions" 
+						class="text-primary text-sm hover:underline flex items-center gap-2"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+						</svg>
+						Open Chrome Extensions
+					</a>
 				</div>
 			</div>
 		</div>
 
 		<!-- Notifications -->
-		<div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-			<div class="px-6 py-4 border-b border-gray-700">
-				<h2 class="text-lg font-semibold text-white">Notifications</h2>
+		<div class="card-glass overflow-hidden">
+			<div class="px-6 py-4 border-b border-white/10">
+				<h2 class="text-lg font-semibold text-white flex items-center gap-2">
+					<span>🔔</span>
+					Notifications
+				</h2>
 			</div>
 			<div class="p-6 space-y-4">
-				<div class="flex items-center justify-between">
+				<div class="flex items-center justify-between p-4 bg-white/5 rounded-xl">
 					<div>
 						<p class="font-medium text-white">Browser Notifications</p>
-						<p class="text-sm text-gray-400">Get notified of new signals</p>
+						<p class="text-sm text-secondary">Get notified of price alerts and signals</p>
 					</div>
-					<button id="enable-notifications" class="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+					<button id="enable-notifications" class="btn-glass btn-glass-primary">
 						Enable
 					</button>
 				</div>
-				<div class="flex items-center justify-between">
+				<div class="flex items-center justify-between p-4 bg-white/5 rounded-xl">
 					<div>
 						<p class="font-medium text-white">Telegram Bot</p>
-						<p class="text-sm text-gray-400">Receive signals via Telegram</p>
+						<p class="text-sm text-secondary">Receive signals via Telegram</p>
 					</div>
-					<span class="px-3 py-1 text-sm bg-gray-700 text-gray-400 rounded-lg">
+					<span class="badge-glass text-xs">
+						Configure in .env
+					</span>
+				</div>
+				<div class="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+					<div>
+						<p class="font-medium text-white">Discord Webhook</p>
+						<p class="text-sm text-secondary">Send alerts to Discord channel</p>
+					</div>
+					<span class="badge-glass text-xs">
 						Configure in .env
 					</span>
 				</div>
 			</div>
 		</div>
 
-		<!-- Danger Zone -->
-		<div class="bg-gray-800 rounded-xl border border-red-700/50 overflow-hidden">
-			<div class="px-6 py-4 border-b border-red-700/50 bg-red-900/20">
-				<h2 class="text-lg font-semibold text-red-400">Danger Zone</h2>
+		<!-- Data Management -->
+		<div class="card-glass overflow-hidden">
+			<div class="px-6 py-4 border-b border-white/10">
+				<h2 class="text-lg font-semibold text-white flex items-center gap-2">
+					<span>💾</span>
+					Data Management
+				</h2>
 			</div>
 			<div class="p-6 space-y-4">
-				<div class="flex items-center justify-between">
+				<div class="flex items-center justify-between p-4 bg-white/5 rounded-xl">
 					<div>
-						<p class="font-medium text-white">Clear All Data</p>
-						<p class="text-sm text-gray-400">Remove all signals, connections, and configurations</p>
+						<p class="font-medium text-white">Export Watchlist</p>
+						<p class="text-sm text-secondary">Download your watchlist as JSON</p>
 					</div>
-					<button class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-						Clear Data
+					<button id="export-watchlist" class="btn-glass">
+						Export
 					</button>
 				</div>
-				<div class="flex items-center justify-between">
+				<div class="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+					<div>
+						<p class="font-medium text-white">Export Alerts</p>
+						<p class="text-sm text-secondary">Download your price alerts as JSON</p>
+					</div>
+					<button id="export-alerts" class="btn-glass">
+						Export
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Danger Zone -->
+		<div class="card-glass overflow-hidden border-red-500/30">
+			<div class="px-6 py-4 border-b border-red-500/30 bg-red-500/10">
+				<h2 class="text-lg font-semibold text-red-400 flex items-center gap-2">
+					<span>⚠️</span>
+					Danger Zone
+				</h2>
+			</div>
+			<div class="p-6 space-y-4">
+				<div class="flex items-center justify-between p-4 bg-red-500/5 rounded-xl border border-red-500/20">
+					<div>
+						<p class="font-medium text-white">Clear Watchlist</p>
+						<p class="text-sm text-secondary">Remove all tokens from your watchlist</p>
+					</div>
+					<button id="clear-watchlist" class="btn-glass hover:bg-red-500/20 hover:border-red-500/50">
+						Clear
+					</button>
+				</div>
+				<div class="flex items-center justify-between p-4 bg-red-500/5 rounded-xl border border-red-500/20">
+					<div>
+						<p class="font-medium text-white">Clear All Alerts</p>
+						<p class="text-sm text-secondary">Remove all price alerts</p>
+					</div>
+					<button id="clear-alerts" class="btn-glass hover:bg-red-500/20 hover:border-red-500/50">
+						Clear
+					</button>
+				</div>
+				<div class="flex items-center justify-between p-4 bg-red-500/5 rounded-xl border border-red-500/20">
 					<div>
 						<p class="font-medium text-white">Sign Out</p>
-						<p class="text-sm text-gray-400">End your current session</p>
+						<p class="text-sm text-secondary">End your current session</p>
 					</div>
-					<button id="logout-btn" class="px-4 py-2 text-sm bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors">
+					<button id="logout-btn" class="btn-glass hover:bg-red-500/20 hover:border-red-500/50">
 						Sign Out
 					</button>
 				</div>
 			</div>
+		</div>
+
+		<!-- About -->
+		<div class="card-glass p-6 text-center">
+			<div class="text-4xl mb-4">🦀</div>
+			<h3 class="text-xl font-bold text-white">ClawFi Dashboard</h3>
+			<p class="text-secondary text-sm mt-1">Your Degen Trading Command Center</p>
+			<div class="flex items-center justify-center gap-4 mt-4">
+				<a href="https://github.com/clawfiai/clawfi" target="_blank" rel="noopener noreferrer" class="text-tertiary hover:text-white transition-colors">
+					GitHub
+				</a>
+				<span class="text-tertiary">•</span>
+				<a href="https://twitter.com/clawfiai" target="_blank" rel="noopener noreferrer" class="text-tertiary hover:text-white transition-colors">
+					Twitter
+				</a>
+				<span class="text-tertiary">•</span>
+				<a href="https://docs.clawfi.ai" target="_blank" rel="noopener noreferrer" class="text-tertiary hover:text-white transition-colors">
+					Docs
+				</a>
+			</div>
+			<p class="text-tertiary text-xs mt-4">v0.4.2 • Built with Astro & React</p>
 		</div>
 	</div>
 </LayoutSidebar>
@@ -120,44 +217,92 @@ import LayoutSidebar from '../app/LayoutSidebar.astro';
 	const token = localStorage.getItem('clawfi_token');
 	if (!token) window.location.href = '/login';
 	
-	const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001';
-	document.getElementById('api-url')?.setAttribute('value', API_URL);
+	const API_URL = 'https://api.clawfi.ai';
+	const apiUrlInput = document.getElementById('api-url');
+	if (apiUrlInput) {
+		(apiUrlInput as HTMLInputElement).value = API_URL;
+	}
 	
-	// Show auth token (truncated for display)
+	// Show auth token
 	const authTokenInput = document.getElementById('auth-token');
 	if (authTokenInput && token) {
-		authTokenInput.value = token;
+		(authTokenInput as HTMLInputElement).value = token;
 	}
 	
 	// Copy token button
 	document.getElementById('copy-token-btn')?.addEventListener('click', async () => {
 		const btn = document.getElementById('copy-token-btn');
-		if (token) {
+		if (token && btn) {
 			await navigator.clipboard.writeText(token);
-			if (btn) {
-				btn.textContent = 'Copied!';
-				btn.classList.remove('bg-primary-600', 'hover:bg-primary-700');
-				btn.classList.add('bg-green-600');
-				setTimeout(() => {
-					btn.textContent = 'Copy Token';
-					btn.classList.add('bg-primary-600', 'hover:bg-primary-700');
-					btn.classList.remove('bg-green-600');
-				}, 2000);
-			}
+			btn.textContent = 'Copied!';
+			btn.classList.add('bg-emerald-500/30', 'border-emerald-500/50');
+			setTimeout(() => {
+				btn.textContent = 'Copy Token';
+				btn.classList.remove('bg-emerald-500/30', 'border-emerald-500/50');
+			}, 2000);
 		}
 	});
 	
-	document.getElementById('logout-btn')?.addEventListener('click', () => {
-		localStorage.removeItem('clawfi_token');
-		window.location.href = '/login';
-	});
-	
+	// Notifications
 	document.getElementById('enable-notifications')?.addEventListener('click', async () => {
+		const btn = document.getElementById('enable-notifications');
 		if ('Notification' in window) {
 			const permission = await Notification.requestPermission();
 			if (permission === 'granted') {
-				new Notification('ClawFi', { body: 'Notifications enabled!' });
+				new Notification('ClawFi', { body: 'Notifications enabled!', icon: '/favicon.svg' });
+				if (btn) {
+					btn.textContent = 'Enabled ✓';
+					btn.classList.add('bg-emerald-500/30', 'border-emerald-500/50');
+				}
 			}
 		}
+	});
+	
+	// Export watchlist
+	document.getElementById('export-watchlist')?.addEventListener('click', () => {
+		const data = localStorage.getItem('clawfi_watchlist');
+		if (data) {
+			const blob = new Blob([data], { type: 'application/json' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = 'clawfi-watchlist.json';
+			a.click();
+		}
+	});
+	
+	// Export alerts
+	document.getElementById('export-alerts')?.addEventListener('click', () => {
+		const data = localStorage.getItem('clawfi_alerts');
+		if (data) {
+			const blob = new Blob([data], { type: 'application/json' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = 'clawfi-alerts.json';
+			a.click();
+		}
+	});
+	
+	// Clear watchlist
+	document.getElementById('clear-watchlist')?.addEventListener('click', () => {
+		if (confirm('Are you sure you want to clear your entire watchlist?')) {
+			localStorage.removeItem('clawfi_watchlist');
+			alert('Watchlist cleared');
+		}
+	});
+	
+	// Clear alerts
+	document.getElementById('clear-alerts')?.addEventListener('click', () => {
+		if (confirm('Are you sure you want to clear all your price alerts?')) {
+			localStorage.removeItem('clawfi_alerts');
+			alert('Alerts cleared');
+		}
+	});
+	
+	// Logout
+	document.getElementById('logout-btn')?.addEventListener('click', () => {
+		localStorage.removeItem('clawfi_token');
+		window.location.href = '/login';
 	});
 </script>

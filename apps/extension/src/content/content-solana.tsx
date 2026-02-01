@@ -8,7 +8,7 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-const VERSION = '0.3.1';
+const VERSION = '0.4.0';
 
 // Get extension icon URL
 function getIconUrl(size: number = 48): string {

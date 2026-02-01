@@ -4,8 +4,13 @@
  */
 
 export * from './types.js';
+
+// CEX Connectors
 export * from './binance/index.js';
+
+// DEX Connectors
 export * from './evm/index.js';
+export * from './solana/index.js';
 
 // Launchpad connectors
 export * from './launchpads/clanker/index.js';

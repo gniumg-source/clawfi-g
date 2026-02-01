@@ -1,442 +1,1000 @@
 /**
- * ClawFi Extension - Popup Script
- * 
- * Handles the extension popup UI with quick stats, recent signals,
- * trending tokens, and quick actions.
- * 
- * Design: Apple Liquid Glass (iOS 26)
+ * ClawFi Extension - Liquid Glass Popup
+ * v0.4.2 - Fully Functional
  */
 
-const VERSION = '0.3.1';
+import { getWatchlist, getAlerts, getRecentTokens, type WatchlistToken, type StoredPriceAlert, type RecentToken } from '../services/storage';
+import { dexscreenerAPI } from '../services/api/dexscreener';
+import type { TrendingToken } from '../services/api/types';
 
-interface ExtensionSettings {
-  nodeUrl: string;
-  authToken: string;
-  overlayEnabled: boolean;
-  clankerOverlayEnabled: boolean;
+// ============================================
+// STATE
+// ============================================
+
+interface PopupState {
+  activeTab: 'home' | 'watchlist' | 'trending' | 'alerts';
+  loading: boolean;
+  connected: boolean;
+  error: string | null;
+  watchlist: WatchlistToken[];
+  alerts: StoredPriceAlert[];
+  recent: RecentToken[];
+  trending: TrendingToken[];
+  trendingLoading: boolean;
 }
 
-interface Signal {
-  id: string;
-  ts: number;
-  severity: string;
-  title: string;
-  summary: string;
-  token?: string;
-  chain?: string;
-}
-
-interface PopupStats {
-  signalsToday: number;
-  tokensTracked: number;
-  alertsToday: number;
-}
-
-interface TrendingToken {
-  chainId: string;
-  tokenAddress: string;
-  totalAmount: number;
-  icon?: string;
-  description?: string;
-  url: string;
-}
-
-const DEFAULT_SETTINGS: ExtensionSettings = {
-  nodeUrl: 'https://api.clawfi.ai',
-  authToken: '',
-  overlayEnabled: true,
-  clankerOverlayEnabled: true,
+let state: PopupState = {
+  activeTab: 'home',
+  loading: true,
+  connected: true,
+  error: null,
+  watchlist: [],
+  alerts: [],
+  recent: [],
+  trending: [],
+  trendingLoading: false,
 };
 
-// Send message with retry
-async function sendMessage<T>(message: unknown, retries = 3): Promise<T | null> {
-  for (let attempt = 0; attempt < retries; attempt++) {
-    try {
-      return await new Promise<T>((resolve, reject) => {
-        chrome.runtime.sendMessage(message, (response) => {
-          if (chrome.runtime.lastError) {
-            reject(chrome.runtime.lastError);
-          } else {
-            resolve(response as T);
-          }
-        });
-      });
-    } catch (error) {
-      console.warn(`[ClawFi Popup] Message failed (attempt ${attempt + 1}):`, error);
-      if (attempt < retries - 1) {
-        await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
-      }
-    }
-  }
-  return null;
-}
+// ============================================
+// STYLES
+// ============================================
 
-// Get settings from background with retry and fallback
-async function getSettings(): Promise<ExtensionSettings> {
-  // First try background
-  const settings = await sendMessage<ExtensionSettings>({ type: 'GET_SETTINGS' });
-  if (settings && settings.authToken) {
-    console.log('[ClawFi Popup] Got settings from background');
-    return settings;
+const styles = `
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
   }
   
-  // Fallback to direct storage access - prioritize local storage
-  try {
-    const localResult = await chrome.storage.local.get('settings');
-    if (localResult.settings && localResult.settings.authToken) {
-      console.log('[ClawFi Popup] Got settings from local storage');
-      return { ...DEFAULT_SETTINGS, ...localResult.settings };
-    }
-    
-    const syncResult = await chrome.storage.sync.get('settings');
-    if (syncResult.settings) {
-      console.log('[ClawFi Popup] Got settings from sync storage');
-      return { ...DEFAULT_SETTINGS, ...syncResult.settings };
-    }
-  } catch (error) {
-    console.error('[ClawFi Popup] Storage access failed:', error);
+  body {
+    width: 400px;
+    height: 580px;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: linear-gradient(145deg, #0a0a12 0%, #12121a 50%, #0d0d15 100%);
+    color: rgba(255, 255, 255, 0.95);
+    -webkit-font-smoothing: antialiased;
   }
   
-  console.log('[ClawFi Popup] Using default settings');
-  return DEFAULT_SETTINGS;
-}
-
-// Fetch with timeout
-async function fetchWithTimeout(url: string, options: RequestInit, timeout = 8000): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 20% 0%, rgba(10, 132, 255, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(88, 86, 214, 0.12) 0%, transparent 50%);
+    pointer-events: none;
+  }
   
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
+  .popup {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    z-index: 1;
   }
-}
-
-// Fetch recent signals with timeout
-async function fetchRecentSignals(nodeUrl: string, authToken: string): Promise<Signal[]> {
-  if (!authToken) return [];
   
-  try {
-    const response = await fetchWithTimeout(`${nodeUrl}/signals?limit=5`, {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json() as { success: boolean; data: Signal[] };
-    return data.success ? data.data : [];
-  } catch (error) {
-    console.error('[ClawFi Popup] Failed to fetch signals:', error);
-    return [];
+  .header {
+    padding: 20px;
+    background: linear-gradient(180deg, rgba(10, 132, 255, 0.2) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
-}
-
-// Fetch stats with timeout
-async function fetchStats(nodeUrl: string, authToken: string): Promise<PopupStats> {
-  if (!authToken) return { signalsToday: 0, tokensTracked: 0, alertsToday: 0 };
   
-  try {
-    const response = await fetchWithTimeout(`${nodeUrl}/agent/status`, {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json() as { 
-      success: boolean; 
-      data: { 
-        stats: { 
-          signalsToday: number; 
-          watchedTokens: number;
-          alertsToday?: number;
-        } 
-      } 
-    };
-    
-    if (data.success) {
-      return {
-        signalsToday: data.data.stats.signalsToday || 0,
-        tokensTracked: data.data.stats.watchedTokens || 0,
-        alertsToday: data.data.stats.alertsToday || 0,
-      };
-    }
-    return { signalsToday: 0, tokensTracked: 0, alertsToday: 0 };
-  } catch (error) {
-    console.error('[ClawFi Popup] Failed to fetch stats:', error);
-    return { signalsToday: 0, tokensTracked: 0, alertsToday: 0 };
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
   }
-}
-
-// Fetch trending tokens
-async function fetchTrendingTokens(nodeUrl: string): Promise<TrendingToken[]> {
-  try {
-    const response = await fetchWithTimeout(`${nodeUrl}/dexscreener/boosts/top`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }, 5000);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json() as { success: boolean; data: TrendingToken[] };
-    return data.success ? data.data.slice(0, 3) : [];
-  } catch (error) {
-    console.error('[ClawFi Popup] Failed to fetch trending:', error);
-    return [];
+  
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
-}
+  
+  .logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0A84FF 0%, #5856D6 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(10, 132, 255, 0.3);
+  }
+  
+  .logo img {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+  }
+  
+  .brand-text h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  
+  .brand-text span {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .icon-btn {
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  
+  .icon-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .status-bar {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 100px;
+    font-size: 12px;
+  }
+  
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #30D158;
+    box-shadow: 0 0 8px #30D158;
+  }
+  
+  .status-dot.offline {
+    background: #FF453A;
+    box-shadow: 0 0 8px #FF453A;
+  }
+  
+  .tabs {
+    display: flex;
+    padding: 12px 16px;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .tab {
+    flex: 1;
+    padding: 12px 8px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.9);
+  }
+  
+  .tab.active {
+    background: rgba(10, 132, 255, 0.2);
+    color: #0A84FF;
+    border: 1px solid rgba(10, 132, 255, 0.3);
+  }
+  
+  .tab-icon {
+    font-size: 20px;
+  }
+  
+  .tab-badge {
+    background: #FF453A;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 4px;
+  }
+  
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  
+  .content::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .stat-card {
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+  }
+  
+  .stat-label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+  
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0A84FF;
+  }
+  
+  .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .quick-action {
+    padding: 14px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: inherit;
+  }
+  
+  .quick-action:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+  }
+  
+  .quick-action-icon {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 6px;
+  }
+  
+  .quick-action-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+  }
+  
+  .card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  
+  .card-header {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  .card-body {
+    padding: 0;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 30px;
+    color: rgba(255, 255, 255, 0.4);
+  }
+  
+  .empty-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+  
+  .token-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .token-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .token-item:last-child {
+    border-bottom: none;
+  }
+  
+  .token-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .token-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(10, 132, 255, 0.3), rgba(88, 86, 214, 0.3));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  
+  .token-icon img {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+  
+  .token-details {
+    min-width: 0;
+    flex: 1;
+  }
+  
+  .token-symbol {
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .token-name {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .token-chain {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  
+  .token-price {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  
+  .token-price-value {
+    font-weight: 600;
+    font-size: 14px;
+  }
+  
+  .token-change {
+    font-size: 12px;
+  }
+  
+  .token-change.positive {
+    color: #30D158;
+  }
+  
+  .token-change.negative {
+    color: #FF453A;
+  }
+  
+  .alert-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  
+  .alert-item:last-child {
+    border-bottom: none;
+  }
+  
+  .alert-info {
+    flex: 1;
+  }
+  
+  .alert-symbol {
+    font-weight: 600;
+    font-size: 14px;
+  }
+  
+  .alert-condition {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  .alert-status {
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+  
+  .alert-status.active {
+    background: rgba(48, 209, 88, 0.2);
+    color: #30D158;
+  }
+  
+  .alert-status.triggered {
+    background: rgba(255, 149, 0, 0.2);
+    color: #FF9500;
+  }
+  
+  .loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+  }
+  
+  .spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #0A84FF;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .footer {
+    padding: 14px 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .footer-version {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+  }
+  
+  .btn-dashboard {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 100px;
+    background: linear-gradient(135deg, #0A84FF 0%, #5856D6 100%);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+  
+  .btn-dashboard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(10, 132, 255, 0.4);
+  }
+  
+  .error-banner {
+    background: rgba(255, 69, 58, 0.15);
+    border: 1px solid rgba(255, 69, 58, 0.3);
+    color: #FF453A;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  
+  .rank-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    margin-right: 8px;
+  }
+  
+  .rank-badge.top3 {
+    background: linear-gradient(135deg, #FFD700 0%, #FF9500 100%);
+    color: #000;
+  }
+`;
 
-// Check API health with timeout
-async function checkApiHealth(nodeUrl: string): Promise<boolean> {
+// ============================================
+// HELPERS
+// ============================================
+
+function getIconUrl(): string {
   try {
-    const response = await fetchWithTimeout(`${nodeUrl}/health`, {
-      method: 'GET',
-    }, 5000);
-    return response.ok;
+    return chrome.runtime.getURL('icons/icon48.png');
   } catch {
-    return false;
+    return '../icons/icon48.png';
   }
 }
 
-// Format time
-function formatTime(ts: number): string {
-  const diff = Date.now() - ts;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
+function formatPrice(price: number): string {
+  if (price === 0) return '$0.00';
+  if (price < 0.0001) return `$${price.toExponential(2)}`;
+  if (price < 1) return `$${price.toFixed(6)}`;
+  if (price < 1000) return `$${price.toFixed(2)}`;
+  return `$${(price / 1000).toFixed(1)}K`;
 }
 
-// Format address
-function formatAddress(addr: string): string {
+function formatChange(change: number): string {
+  const sign = change >= 0 ? '+' : '';
+  return `${sign}${change.toFixed(2)}%`;
+}
+
+function truncateAddress(addr: string): string {
+  if (!addr) return '';
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
 
-// Render signals list
-function renderSignals(signals: Signal[]): void {
-  const container = document.getElementById('signals-list');
-  if (!container) return;
+function timeAgo(timestamp: number): string {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  if (seconds < 60) return 'Just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86400)}d ago`;
+}
 
-  if (signals.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div style="font-size: 24px; margin-bottom: 8px;">✨</div>
-        No recent signals
-      </div>
-    `;
-    return;
+// ============================================
+// DATA LOADING
+// ============================================
+
+async function loadLocalData(): Promise<void> {
+  try {
+    const [watchlist, alerts, recent] = await Promise.all([
+      getWatchlist(),
+      getAlerts(),
+      getRecentTokens(),
+    ]);
+    
+    state.watchlist = watchlist;
+    state.alerts = alerts;
+    state.recent = recent;
+    state.loading = false;
+    render();
+  } catch (error) {
+    console.error('[ClawFi] Error loading local data:', error);
+    state.loading = false;
+    render();
   }
+}
 
-  container.innerHTML = signals.map((signal) => `
-    <div class="signal-item">
-      <div class="signal-severity ${signal.severity}"></div>
-      <div class="signal-content">
-        <div class="signal-title">${escapeHtml(signal.title)}</div>
-        <div class="signal-time">${formatTime(signal.ts)}</div>
+async function loadTrendingData(): Promise<void> {
+  if (state.trendingLoading) return;
+  
+  state.trendingLoading = true;
+  render();
+  
+  try {
+    const trending = await dexscreenerAPI.getBoostedTokens();
+    state.trending = trending.slice(0, 10);
+  } catch (error) {
+    console.error('[ClawFi] Error loading trending:', error);
+    state.trending = [];
+  }
+  
+  state.trendingLoading = false;
+  render();
+}
+
+// ============================================
+// RENDER
+// ============================================
+
+function render(): void {
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  const iconUrl = getIconUrl();
+  const activeAlerts = state.alerts.filter(a => a.enabled && !a.triggered).length;
+
+  app.innerHTML = `
+    <div class="popup">
+      <div class="header">
+        <div class="header-top">
+          <div class="brand">
+            <div class="logo">
+              <img src="${iconUrl}" alt="ClawFi" onerror="this.style.display='none'">
+            </div>
+            <div class="brand-text">
+              <h1>ClawFi</h1>
+              <span>Degen Trading Assistant</span>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="icon-btn" id="refresh-btn" title="Refresh">🔄</button>
+            <button class="icon-btn" id="settings-btn" title="Settings">⚙️</button>
+          </div>
+        </div>
+        <div class="status-bar">
+          <div class="status-item">
+            <span class="status-dot ${state.connected ? '' : 'offline'}"></span>
+            <span>${state.connected ? 'Active' : 'Offline'}</span>
+          </div>
+          <div class="status-item">
+            <span>🦀</span>
+            <span>v0.4.2</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="tabs">
+        <button class="tab ${state.activeTab === 'home' ? 'active' : ''}" data-tab="home">
+          <span class="tab-icon">🏠</span>
+          <span>Home</span>
+        </button>
+        <button class="tab ${state.activeTab === 'watchlist' ? 'active' : ''}" data-tab="watchlist">
+          <span class="tab-icon">⭐</span>
+          <span>Watch${state.watchlist.length > 0 ? ` (${state.watchlist.length})` : ''}</span>
+        </button>
+        <button class="tab ${state.activeTab === 'trending' ? 'active' : ''}" data-tab="trending">
+          <span class="tab-icon">🔥</span>
+          <span>Hot</span>
+        </button>
+        <button class="tab ${state.activeTab === 'alerts' ? 'active' : ''}" data-tab="alerts">
+          <span class="tab-icon">🔔</span>
+          <span>Alerts${activeAlerts > 0 ? `<span class="tab-badge">${activeAlerts}</span>` : ''}</span>
+        </button>
+      </div>
+      
+      <div class="content">
+        ${state.error ? `<div class="error-banner">${state.error}</div>` : ''}
+        ${state.loading ? renderLoading() : renderContent()}
+      </div>
+      
+      <div class="footer">
+        <span class="footer-version">ClawFi v0.4.2</span>
+        <button class="btn-dashboard" id="dashboard-btn">
+          🦀 Open Dashboard
+        </button>
+      </div>
+    </div>
+  `;
+
+  attachListeners();
+}
+
+function renderLoading(): string {
+  return `
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+    </div>
+  `;
+}
+
+function renderContent(): string {
+  switch (state.activeTab) {
+    case 'home':
+      return renderHome();
+    case 'watchlist':
+      return renderWatchlist();
+    case 'trending':
+      return renderTrending();
+    case 'alerts':
+      return renderAlerts();
+    default:
+      return '';
+  }
+}
+
+function renderHome(): string {
+  const activeAlerts = state.alerts.filter(a => a.enabled && !a.triggered).length;
+  
+  return `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Watchlist</div>
+        <div class="stat-value">${state.watchlist.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Alerts</div>
+        <div class="stat-value">${activeAlerts}</div>
+      </div>
+    </div>
+    
+    <div class="quick-actions">
+      <a class="quick-action" href="https://dexscreener.com" target="_blank">
+        <span class="quick-action-icon">📊</span>
+        <span class="quick-action-label">DEXScreener</span>
+      </a>
+      <a class="quick-action" href="https://jup.ag" target="_blank">
+        <span class="quick-action-icon">🪐</span>
+        <span class="quick-action-label">Jupiter</span>
+      </a>
+      <a class="quick-action" href="https://pump.fun" target="_blank">
+        <span class="quick-action-icon">🎰</span>
+        <span class="quick-action-label">Pump.fun</span>
+      </a>
+      <a class="quick-action" href="https://clanker.world" target="_blank">
+        <span class="quick-action-icon">🚀</span>
+        <span class="quick-action-label">Clanker</span>
+      </a>
+    </div>
+    
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🕐 Recent Activity</span>
+      </div>
+      <div class="card-body">
+        ${state.recent.length > 0 ? renderRecentTokens() : `
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <p>Browse DEX sites to see history</p>
+          </div>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+function renderRecentTokens(): string {
+  return state.recent.slice(0, 5).map(token => `
+    <div class="token-item" data-address="${token.address}" data-chain="${token.chain}">
+      <div class="token-info">
+        <div class="token-icon">🪙</div>
+        <div class="token-details">
+          <div class="token-symbol">${token.symbol || truncateAddress(token.address)}</div>
+          <div class="token-name">${token.name || token.source || 'Token'}</div>
+        </div>
+      </div>
+      <div class="token-price">
+        <span class="token-chain">${token.chain}</span>
+        <div class="token-name">${timeAgo(token.lastViewed)}</div>
       </div>
     </div>
   `).join('');
 }
 
-// Escape HTML
-function escapeHtml(text: string): string {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// Update status indicators
-function updateStatus(apiConnected: boolean, hasToken: boolean): void {
-  const apiStatus = document.getElementById('api-status');
-  const apiStatusText = document.getElementById('api-status-text');
-  const wsStatus = document.getElementById('ws-status');
-  const wsStatusText = document.getElementById('ws-status-text');
-
-  if (apiStatus && apiStatusText) {
-    if (!hasToken) {
-      apiStatus.className = 'status-dot warning';
-      apiStatusText.textContent = 'No Token';
-    } else if (apiConnected) {
-      apiStatus.className = 'status-dot connected';
-      apiStatusText.textContent = 'Connected';
-    } else {
-      apiStatus.className = 'status-dot disconnected';
-      apiStatusText.textContent = 'Offline';
-    }
-  }
-
-  if (wsStatus && wsStatusText) {
-    if (apiConnected) {
-      wsStatus.className = 'status-dot connected';
-      wsStatusText.textContent = 'Active';
-    } else {
-      wsStatus.className = 'status-dot warning';
-      wsStatusText.textContent = 'N/A';
-    }
-  }
-}
-
-// Update stats
-function updateStats(stats: PopupStats): void {
-  const signalsEl = document.getElementById('signals-count');
-  const tokensEl = document.getElementById('tokens-count');
-  const alertsEl = document.getElementById('alerts-count');
-
-  if (signalsEl) signalsEl.textContent = String(stats.signalsToday);
-  if (tokensEl) tokensEl.textContent = String(stats.tokensTracked);
-  if (alertsEl) alertsEl.textContent = String(stats.alertsToday);
-}
-
-// Render trending tokens
-function renderTrendingTokens(tokens: TrendingToken[]): void {
-  const container = document.getElementById('trending-list');
-  if (!container) return;
-  
-  if (tokens.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state" style="padding: 16px;">
-        Loading trending...
+function renderWatchlist(): string {
+  if (state.watchlist.length === 0) {
+    return `
+      <div class="empty-state">
+        <div class="empty-icon">⭐</div>
+        <p>No tokens in watchlist</p>
+        <p style="font-size: 12px; margin-top: 8px;">Add tokens while browsing DEX sites</p>
       </div>
     `;
-    return;
   }
-  
-  container.innerHTML = tokens.map(token => `
-    <a class="trending-item" href="${token.url}" target="_blank" rel="noopener">
-      <div class="trending-chain">${token.chainId === 'solana' ? '◎' : token.chainId === 'base' ? '⬡' : '◆'}</div>
-      <div class="trending-info">
-        <div class="trending-address">${formatAddress(token.tokenAddress)}</div>
-        <div class="trending-boost">🔥 ${token.totalAmount} boosts</div>
+
+  return `
+    <div class="card">
+      <div class="card-body">
+        ${state.watchlist.map(token => `
+          <div class="token-item" data-address="${token.address}" data-chain="${token.chain}">
+            <div class="token-info">
+              <div class="token-icon">⭐</div>
+              <div class="token-details">
+                <div class="token-symbol">${token.symbol || truncateAddress(token.address)}</div>
+                <div class="token-name">${token.name || token.chain}</div>
+              </div>
+            </div>
+            <div class="token-price">
+              <span class="token-chain">${token.chain}</span>
+              <div class="token-name">Added ${timeAgo(token.addedAt)}</div>
+            </div>
+          </div>
+        `).join('')}
       </div>
-    </a>
-  `).join('');
+    </div>
+  `;
 }
 
-// Initialize popup
-async function init(): Promise<void> {
-  console.log('[ClawFi Popup] Initializing v' + VERSION);
-  
-  // Update version display
-  const versionEl = document.querySelector('.version');
-  if (versionEl) versionEl.textContent = `v${VERSION}`;
-  
-  // Show loading state
-  updateStatus(false, false);
-  const signalsList = document.getElementById('signals-list');
-  if (signalsList) signalsList.innerHTML = '<div class="empty-state">Loading...</div>';
+function renderTrending(): string {
+  if (state.trendingLoading) {
+    return renderLoading();
+  }
 
-  // Get settings
-  const settings = await getSettings();
-  console.log('[ClawFi Popup] Settings loaded:', { 
-    nodeUrl: settings.nodeUrl, 
-    hasToken: !!settings.authToken 
+  if (state.trending.length === 0) {
+    return `
+      <div class="empty-state">
+        <div class="empty-icon">🔥</div>
+        <p>No trending tokens found</p>
+        <p style="font-size: 12px; margin-top: 8px;">Pull to refresh</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🔥 Trending on Dexscreener</span>
+      </div>
+      <div class="card-body">
+        ${state.trending.map((item, index) => `
+          <div class="token-item" data-address="${item.token.address}" data-chain="${item.pair.chain}" data-url="${item.pair.url || ''}">
+            <div class="token-info">
+              <span class="rank-badge ${index < 3 ? 'top3' : ''}">${index + 1}</span>
+              <div class="token-icon">
+                ${item.token.logoUrl ? `<img src="${item.token.logoUrl}" onerror="this.parentElement.innerHTML='🔥'">` : '🔥'}
+              </div>
+              <div class="token-details">
+                <div class="token-symbol">${item.token.symbol || truncateAddress(item.token.address)}</div>
+                <div class="token-name">${item.token.name || 'Unknown'}</div>
+              </div>
+            </div>
+            <div class="token-price">
+              <span class="token-chain">${item.pair.chain}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderAlerts(): string {
+  if (state.alerts.length === 0) {
+    return `
+      <div class="empty-state">
+        <div class="empty-icon">🔔</div>
+        <p>No price alerts</p>
+        <p style="font-size: 12px; margin-top: 8px;">Create alerts from token overlays</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="card">
+      <div class="card-body">
+        ${state.alerts.map(alert => `
+          <div class="alert-item">
+            <div class="alert-info">
+              <div class="alert-symbol">${alert.symbol || truncateAddress(alert.address)}</div>
+              <div class="alert-condition">
+                ${alert.type === 'above' ? '↑' : alert.type === 'below' ? '↓' : '↔'} 
+                ${alert.type === 'change' ? `${alert.value}%` : formatPrice(alert.value)}
+              </div>
+            </div>
+            <span class="alert-status ${alert.triggered ? 'triggered' : 'active'}">
+              ${alert.triggered ? 'Triggered' : 'Active'}
+            </span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ============================================
+// EVENT LISTENERS
+// ============================================
+
+function attachListeners(): void {
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      const target = e.currentTarget as HTMLElement;
+      const newTab = target.dataset.tab as PopupState['activeTab'];
+      state.activeTab = newTab;
+      
+      // Load trending data when switching to trending tab
+      if (newTab === 'trending' && state.trending.length === 0) {
+        loadTrendingData();
+      }
+      
+      render();
+    });
   });
 
-  // Check API health first (doesn't require auth)
-  const apiConnected = await checkApiHealth(settings.nodeUrl);
-  
-  // Fetch trending tokens in parallel (doesn't require auth)
-  fetchTrendingTokens(settings.nodeUrl).then(renderTrendingTokens);
-
-  // Check if token is configured
-  if (!settings.authToken) {
-    updateStatus(apiConnected, false);
-    if (signalsList) {
-      signalsList.innerHTML = `
-        <div class="empty-state">
-          <div style="font-size: 24px; margin-bottom: 8px;">🔑</div>
-          Configure token in Settings
-        </div>
-      `;
+  // Refresh button
+  document.getElementById('refresh-btn')?.addEventListener('click', async () => {
+    state.loading = true;
+    render();
+    await loadLocalData();
+    if (state.activeTab === 'trending') {
+      await loadTrendingData();
     }
-    return;
-  }
-
-  updateStatus(apiConnected, true);
-
-  if (!apiConnected) {
-    if (signalsList) {
-      signalsList.innerHTML = `
-        <div class="empty-state">
-          <div style="font-size: 24px; margin-bottom: 8px;">📡</div>
-          Cannot reach API
-        </div>
-      `;
-    }
-    return;
-  }
-
-  // Fetch and render data in parallel
-  try {
-    const [signals, stats] = await Promise.all([
-      fetchRecentSignals(settings.nodeUrl, settings.authToken),
-      fetchStats(settings.nodeUrl, settings.authToken),
-    ]);
-
-    renderSignals(signals);
-    updateStats(stats);
-  } catch (error) {
-    console.error('[ClawFi Popup] Data fetch error:', error);
-    if (signalsList) {
-      signalsList.innerHTML = `
-        <div class="empty-state">
-          <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
-          Error loading data
-        </div>
-      `;
-    }
-  }
-}
-
-// Event listeners
-document.addEventListener('DOMContentLoaded', () => {
-  init();
-
-  // Dashboard button
-  document.getElementById('btn-dashboard')?.addEventListener('click', () => {
-    chrome.tabs.create({ url: 'https://dashboard.clawfi.ai' });
   });
 
   // Settings button
-  document.getElementById('btn-settings')?.addEventListener('click', () => {
-    chrome.runtime.openOptionsPage();
+  document.getElementById('settings-btn')?.addEventListener('click', () => {
+    chrome.runtime.openOptionsPage?.();
   });
 
-  // Docs link
-  document.getElementById('link-docs')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    chrome.tabs.create({ url: 'https://github.com/clawfiai/clawfi#readme' });
+  // Dashboard button - Open trending on Dexscreener
+  document.getElementById('dashboard-btn')?.addEventListener('click', () => {
+    chrome.tabs.create({ url: 'https://dexscreener.com/new-pairs' });
   });
+
+  // Token items click - open in dexscreener
+  document.querySelectorAll('.token-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const el = item as HTMLElement;
+      const url = el.dataset.url;
+      const address = el.dataset.address;
+      const chain = el.dataset.chain;
+      
+      if (url) {
+        chrome.tabs.create({ url });
+      } else if (address && chain) {
+        chrome.tabs.create({ url: `https://dexscreener.com/${chain}/${address}` });
+      }
+    });
+  });
+}
+
+// ============================================
+// INIT
+// ============================================
+
+function init(): void {
+  console.log('[ClawFi Popup] Initializing v0.4.2...');
   
-  // Quick action links
-  document.getElementById('link-dexscreener')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    chrome.tabs.create({ url: 'https://dexscreener.com' });
-  });
+  // Add styles
+  const styleEl = document.createElement('style');
+  styleEl.textContent = styles;
+  document.head.appendChild(styleEl);
   
-  document.getElementById('link-clanker')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    chrome.tabs.create({ url: 'https://clanker.world' });
-  });
-});
+  // Load data and render
+  loadLocalData();
+}
+
+// Start
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
