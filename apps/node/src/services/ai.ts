@@ -77,7 +77,7 @@ export class AIService {
     const apiKey = process.env.OPENAI_API_KEY;
     if (apiKey && apiKey !== 'sk-your-openai-api-key-here') {
       this.openai = new OpenAI({ apiKey });
-      console.log('🤖 AI Service initialized with OpenAI');
+      console.log('🦀 Clawf AI initialized');
     } else {
       console.warn('⚠️ AI Service: OPENAI_API_KEY not configured');
     }
@@ -114,7 +114,7 @@ export class AIService {
       ts: s.ts,
     }));
 
-    const prompt = `You are a crypto trading analyst AI for ClawFi, a DeFi intelligence platform. Analyze this token and provide a structured assessment.
+    const prompt = `You are Clawf, the AI trading analyst for ClawFi - a DeFi intelligence platform. Analyze this token and provide a structured assessment.
 
 TOKEN DATA:
 - Address: ${tokenData.address}
@@ -145,7 +145,7 @@ Provide your analysis in the following JSON format ONLY (no markdown, no explana
     const response = await this.openai.chat.completions.create({
       model: this.model,
       messages: [
-        { role: 'system', content: 'You are a professional crypto analyst. Always respond with valid JSON only, no markdown formatting.' },
+        { role: 'system', content: 'You are Clawf, ClawFi\'s professional crypto analyst. Always respond with valid JSON only, no markdown formatting.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.7,
@@ -192,7 +192,7 @@ Provide your analysis in the following JSON format ONLY (no markdown, no explana
       throw new Error('AI service not configured. Set OPENAI_API_KEY in environment.');
     }
 
-    const prompt = `You are a crypto trading signal analyst. Rate this signal for a trader.
+    const prompt = `You are Clawf, ClawFi's signal analyst. Rate this signal for a trader.
 
 SIGNAL:
 - Type: ${signal.signalType}
@@ -212,7 +212,7 @@ Rate this signal in the following JSON format ONLY:
     const response = await this.openai.chat.completions.create({
       model: this.model,
       messages: [
-        { role: 'system', content: 'You are a professional crypto signal analyst. Always respond with valid JSON only.' },
+        { role: 'system', content: 'You are Clawf, ClawFi\'s crypto signal analyst. Always respond with valid JSON only.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.5,
@@ -269,7 +269,7 @@ CURRENT CONTEXT:
 ${context?.watchedTokens ? `- User Portfolio: ${context.watchedTokens.join(', ')}` : ''}
 `;
 
-    const prompt = `You are ClawFi AI, a crypto trading advisor. You help users make informed decisions about DeFi trading on chains like Base, Solana, and Ethereum.
+    const prompt = `You are Clawf, ClawFi's crypto trading advisor. You help users make informed decisions about DeFi trading on chains like Base, Solana, and Ethereum.
 
 ${contextStr}
 
@@ -287,7 +287,7 @@ Respond in the following JSON format ONLY:
     const response = await this.openai.chat.completions.create({
       model: this.model,
       messages: [
-        { role: 'system', content: 'You are ClawFi AI, a helpful and knowledgeable crypto trading advisor. Always respond with valid JSON only. Be practical and include risk warnings.' },
+        { role: 'system', content: 'You are Clawf, ClawFi\'s helpful and knowledgeable crypto trading advisor. Always respond with valid JSON only. Be practical and include risk warnings.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.7,
@@ -357,7 +357,7 @@ Respond in the following JSON format ONLY:
       throw new Error('AI service not configured. Set OPENAI_API_KEY in environment.');
     }
 
-    const prompt = `You are ClawFi's command interpreter. Parse the user's natural language input into a structured command.
+    const prompt = `You are Clawf, ClawFi's command interpreter. Parse the user's natural language input into a structured command.
 
 Available intents:
 - analyze_token: Analyze a specific token (needs: address or symbol, chain)
