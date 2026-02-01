@@ -61,8 +61,8 @@ const DEFAULT_CONFIG: Required<FourMemeConfig> = {
   minMarketCapUsd: 0,
 };
 
-// Four.meme API is GraphQL-only (Bitquery), use DexScreener for BSC data as fallback
-const DEXSCREENER_API_URL = 'https://api.dexscreener.com';
+// Four.meme API is GraphQL-only (Bitquery), use GeckoTerminal for BSC data as fallback
+const GECKOTERMINAL_API_URL = 'https://api.geckoterminal.com/api/v2';
 const BSCSCAN_URL = 'https://bscscan.com';
 
 // ============================================
@@ -91,14 +91,14 @@ export class FourMemeConnector implements LaunchpadConnector {
   }
 
   /**
-   * Get connector status - uses DexScreener BSC data
+   * Get connector status - uses GeckoTerminal BSC data
    */
   async getStatus(): Promise<{ connected: boolean; latencyMs?: number; error?: string }> {
     const start = Date.now();
     
     try {
-      // Use DexScreener to check BSC connectivity
-      const response = await fetch(`${DEXSCREENER_API_URL}/latest/dex/search?q=bsc`, {
+      // Use GeckoTerminal to check BSC connectivity
+      const response = await fetch(`${GECKOTERMINAL_API_URL}/networks/bsc/new_pools?page=1`, {
         headers: {
           'Accept': 'application/json',
           'User-Agent': 'ClawFi/0.2.0',
@@ -108,7 +108,7 @@ export class FourMemeConnector implements LaunchpadConnector {
       if (!response.ok) {
         return {
           connected: false,
-          error: `DexScreener API returned ${response.status}`,
+          error: `GeckoTerminal API returned ${response.status}`,
         };
       }
 
@@ -125,15 +125,14 @@ export class FourMemeConnector implements LaunchpadConnector {
   }
 
   /**
-   * Fetch recent token launches from DexScreener (BSC new pairs)
+   * Fetch recent token launches from GeckoTerminal (BSC new pools)
    */
   async fetchRecentLaunches(limit?: number): Promise<LaunchpadToken[]> {
     const tokensLimit = limit || this.config.maxTokensPerRequest;
     
     try {
-      // Use DexScreener to get latest BSC tokens
-      // Search for recent tokens with low liquidity (likely new launches)
-      const response = await fetch(`${DEXSCREENER_API_URL}/token-profiles/latest/v1`, {
+      // Use GeckoTerminal to get latest BSC new pools
+      const response = await fetch(`${GECKOTERMINAL_API_URL}/networks/bsc/new_pools?page=1`, {
         headers: {
           'Accept': 'application/json',
           'User-Agent': 'ClawFi/0.2.0',
@@ -141,36 +140,71 @@ export class FourMemeConnector implements LaunchpadConnector {
       });
 
       if (!response.ok) {
-        console.error(`[FourMeme] DexScreener API error: ${response.status}`);
+        console.error(`[FourMeme] GeckoTerminal API error: ${response.status}`);
         return [];
       }
 
-      const profiles = await response.json() as Array<{
-        url: string;
-        chainId: string;
-        tokenAddress: string;
-        icon?: string;
-        header?: string;
-        description?: string;
-        links?: Array<{ type: string; url: string }>;
-      }>;
-      
-      // Filter to BSC tokens only
-      const bscProfiles = profiles
-        .filter(p => p.chainId === 'bsc')
-        .slice(0, tokensLimit);
+      interface GeckoPool {
+        id: string;
+        type: string;
+        attributes: {
+          name: string;
+          address: string;
+          base_token_price_usd: string | null;
+          fdv_usd: string | null;
+          reserve_in_usd: string | null;
+          pool_created_at: string | null;
+        };
+        relationships?: {
+          base_token?: { data?: { id: string } };
+          quote_token?: { data?: { id: string } };
+        };
+      }
+
+      const data = await response.json() as { data?: GeckoPool[] };
+      const pools = data.data || [];
 
       this.lastFetchTime = Date.now();
 
-      // Convert to our format - we need to fetch additional data for each token
+      // Convert to our format
       const tokens: LaunchpadToken[] = [];
       
-      for (const profile of bscProfiles.slice(0, 20)) {
+      for (const pool of pools.slice(0, tokensLimit)) {
         try {
-          const tokenData = await this.fetchTokenFromDexScreener(profile.tokenAddress);
-          if (tokenData) {
-            tokens.push(tokenData);
-          }
+          // Extract token address from relationship ID (format: "bsc_0x...")
+          const baseTokenId = pool.relationships?.base_token?.data?.id;
+          if (!baseTokenId) continue;
+          
+          const address = baseTokenId.replace('bsc_', '');
+          const name = pool.attributes.name.split(' / ')[0] || 'Unknown';
+          
+          // Skip if it's a common quote token (WBNB, USDT, etc.)
+          if (['WBNB', 'USDT', 'USDC', 'BUSD', 'BNB'].includes(name)) continue;
+
+          const token: LaunchpadToken = {
+            launchpad: 'fourmeme',
+            chain: 'bsc',
+            address: address,
+            symbol: name,
+            name: name,
+            createdAt: pool.attributes.pool_created_at 
+              ? new Date(pool.attributes.pool_created_at) 
+              : new Date(),
+            priceUsd: pool.attributes.base_token_price_usd 
+              ? parseFloat(pool.attributes.base_token_price_usd) 
+              : undefined,
+            marketCapUsd: pool.attributes.fdv_usd 
+              ? parseFloat(pool.attributes.fdv_usd) 
+              : undefined,
+            extensions: {
+              liquidity: pool.attributes.reserve_in_usd 
+                ? parseFloat(pool.attributes.reserve_in_usd) 
+                : undefined,
+              poolAddress: pool.attributes.address,
+            },
+          };
+          
+          tokens.push(token);
         } catch {
           // Skip failed tokens
         }
@@ -189,11 +223,11 @@ export class FourMemeConnector implements LaunchpadConnector {
   }
 
   /**
-   * Fetch token data from DexScreener
+   * Fetch token data from GeckoTerminal
    */
-  private async fetchTokenFromDexScreener(address: string): Promise<LaunchpadToken | null> {
+  private async fetchTokenFromGeckoTerminal(address: string): Promise<LaunchpadToken | null> {
     try {
-      const response = await fetch(`${DEXSCREENER_API_URL}/tokens/v1/bsc/${address}`, {
+      const response = await fetch(`${GECKOTERMINAL_API_URL}/networks/bsc/tokens/${address}`, {
         headers: {
           'Accept': 'application/json',
           'User-Agent': 'ClawFi/0.2.0',
@@ -202,39 +236,39 @@ export class FourMemeConnector implements LaunchpadConnector {
 
       if (!response.ok) return null;
 
-      const pairs = await response.json() as Array<{
-        chainId: string;
-        pairAddress: string;
-        baseToken: { address: string; name: string; symbol: string };
-        quoteToken: { address: string; name: string; symbol: string };
-        priceUsd: string;
-        liquidity?: { usd: number };
-        fdv?: number;
-        pairCreatedAt?: number;
-        info?: { imageUrl?: string };
-      }>;
+      interface GeckoToken {
+        data?: {
+          attributes?: {
+            address: string;
+            name: string;
+            symbol: string;
+            price_usd: string | null;
+            fdv_usd: string | null;
+            total_reserve_in_usd: string | null;
+            image_url: string | null;
+          };
+        };
+      }
 
-      if (!pairs || pairs.length === 0) return null;
+      const data = await response.json() as GeckoToken;
+      if (!data.data?.attributes) return null;
 
-      const pair = pairs[0];
-      if (!pair) return null;
-      
-      const isBaseToken = pair.baseToken.address.toLowerCase() === address.toLowerCase();
-      const token = isBaseToken ? pair.baseToken : pair.quoteToken;
+      const attrs = data.data.attributes;
 
       return {
         launchpad: 'fourmeme',
         chain: 'bsc',
-        address: token.address,
-        symbol: token.symbol,
-        name: token.name,
-        createdAt: pair.pairCreatedAt ? new Date(pair.pairCreatedAt) : new Date(),
-        creator: '', // Not available from DexScreener
-        priceUsd: parseFloat(pair.priceUsd) || undefined,
-        marketCapUsd: pair.fdv,
-        imageUrl: pair.info?.imageUrl,
+        address: attrs.address,
+        symbol: attrs.symbol,
+        name: attrs.name,
+        createdAt: new Date(),
+        priceUsd: attrs.price_usd ? parseFloat(attrs.price_usd) : undefined,
+        marketCapUsd: attrs.fdv_usd ? parseFloat(attrs.fdv_usd) : undefined,
+        imageUrl: attrs.image_url || undefined,
         extensions: {
-          liquidity: pair.liquidity?.usd,
+          liquidity: attrs.total_reserve_in_usd 
+            ? parseFloat(attrs.total_reserve_in_usd) 
+            : undefined,
         },
       };
     } catch {
@@ -259,10 +293,10 @@ export class FourMemeConnector implements LaunchpadConnector {
   }
 
   /**
-   * Fetch token by address using DexScreener
+   * Fetch token by address using GeckoTerminal
    */
   async fetchToken(address: string): Promise<LaunchpadToken | null> {
-    return this.fetchTokenFromDexScreener(address);
+    return this.fetchTokenFromGeckoTerminal(address);
   }
 
   /**
