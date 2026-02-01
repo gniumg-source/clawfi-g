@@ -34,6 +34,8 @@ import { LaunchCoverageJob, createLaunchCoverageJob } from './jobs/launchCoverag
 import { EarlyDistributionAnalyzer, createEarlyDistributionAnalyzer } from './jobs/earlyDistribution.js';
 import { LiquidityRiskDetector, createLiquidityRiskDetector } from './jobs/liquidityRisk.js';
 import { ClankerSyncJob, createClankerSyncJob } from './jobs/clankerSync.js';
+import { FourMemeSyncJob, createFourMemeSyncJob } from './jobs/fourmemeSync.js';
+import { PumpFunSyncJob, createPumpFunSyncJob } from './jobs/pumpfunSync.js';
 import { config } from './config.js';
 
 // Extend Fastify types
@@ -52,6 +54,8 @@ declare module 'fastify' {
     distributionAnalyzer: EarlyDistributionAnalyzer | null;
     liquidityDetector: LiquidityRiskDetector | null;
     clankerSyncJob: ClankerSyncJob | null;
+    fourMemeSyncJob: FourMemeSyncJob | null;
+    pumpFunSyncJob: PumpFunSyncJob | null;
   }
 }
 
@@ -227,6 +231,8 @@ async function main() {
     fastify.distributionAnalyzer?.stop();
     fastify.liquidityDetector?.stop();
     fastify.clankerSyncJob?.stop();
+    fastify.fourMemeSyncJob?.stop();
+    fastify.pumpFunSyncJob?.stop();
     
     connectorRegistry.stopAll();
     await strategyScheduler.stop();
@@ -325,6 +331,36 @@ async function main() {
     fastify.log.info('Clanker features disabled or BASE_RPC_URL not configured');
   }
 
+  // Four.meme sync job (BSC)
+  const fourMemeEnabled = process.env.FOURMEME_ENABLED !== 'false';
+  if (fourMemeEnabled) {
+    const fourMemeSyncJob = createFourMemeSyncJob(prisma, signalService, {
+      enabled: true,
+      syncIntervalMs: parseInt(process.env.FOURMEME_SYNC_INTERVAL_MS || '120000', 10),
+    });
+    fastify.fourMemeSyncJob = fourMemeSyncJob;
+    fourMemeSyncJob.start();
+    fastify.log.info('Four.meme sync job started (BSC)');
+  } else {
+    fastify.fourMemeSyncJob = null;
+    fastify.log.info('Four.meme sync disabled');
+  }
+
+  // Pump.fun sync job (Solana)
+  const pumpFunEnabled = process.env.PUMPFUN_ENABLED !== 'false';
+  if (pumpFunEnabled) {
+    const pumpFunSyncJob = createPumpFunSyncJob(prisma, signalService, {
+      enabled: true,
+      syncIntervalMs: parseInt(process.env.PUMPFUN_SYNC_INTERVAL_MS || '120000', 10),
+    });
+    fastify.pumpFunSyncJob = pumpFunSyncJob;
+    pumpFunSyncJob.start();
+    fastify.log.info('Pump.fun sync job started (Solana)');
+  } else {
+    fastify.pumpFunSyncJob = null;
+    fastify.log.info('Pump.fun sync disabled');
+  }
+
   // Test Telegram connection
   if (telegramNotifier.isEnabled()) {
     fastify.log.info('Telegram notifications enabled');
@@ -339,6 +375,8 @@ async function main() {
       devMode: config.devMode,
       telegramEnabled: telegramNotifier.isEnabled(),
       clankerEnabled: clankerEnabled && clankerFactories.length > 0,
+      fourMemeEnabled,
+      pumpFunEnabled,
       intelligenceEnabled,
     },
   });
