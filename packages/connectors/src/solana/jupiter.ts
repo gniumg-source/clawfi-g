@@ -341,8 +341,9 @@ export class JupiterConnector implements IDexConnector {
 
   /**
    * Get swap transaction data (for signing by user wallet)
+   * Note: Solana-specific format, different from EVM interface
    */
-  async buildSwapTx(request: QuoteRequest): Promise<{
+  async buildSolanaSwapTx(request: QuoteRequest): Promise<{
     swapTransaction: string;
     lastValidBlockHeight: number;
   }> {
