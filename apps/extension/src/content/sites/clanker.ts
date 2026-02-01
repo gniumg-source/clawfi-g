@@ -13,8 +13,8 @@ import { renderClankerOverlay, unmountClankerOverlay } from '../overlay/ClankerO
 // Ethereum address validation regex
 const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
-// Clanker path pattern
-const CLANKER_PATH_REGEX = /^\/clanker\/(0x[a-fA-F0-9]{40})$/i;
+// Clanker path pattern - matches /clanker/0x... with any trailing content
+const CLANKER_PATH_REGEX = /^\/clanker\/(0x[a-fA-F0-9]{40})/i;
 
 interface ClankerTokenMetadata {
   address: string;
@@ -116,12 +116,49 @@ function buildTokenMetadata(address: string): ClankerTokenMetadata {
 // Track current state
 let currentToken: string | null = null;
 let isOverlayMounted = false;
+let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Send message to background with retry
+ */
+async function sendMessageWithRetry<T>(
+  message: unknown,
+  retries = 3
+): Promise<T | null> {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      return await new Promise<T>((resolve, reject) => {
+        chrome.runtime.sendMessage(message, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+          } else {
+            resolve(response as T);
+          }
+        });
+      });
+    } catch (error) {
+      console.warn(`[ClawFi] Message failed (attempt ${attempt + 1}/${retries}):`, error);
+      if (attempt < retries - 1) {
+        await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+      }
+    }
+  }
+  return null;
+}
 
 /**
  * Handle route change - detect token and update overlay
  */
 async function handleRouteChange(): Promise<void> {
+  // Clear any pending retry
+  if (retryTimeout) {
+    clearTimeout(retryTimeout);
+    retryTimeout = null;
+  }
+  
   const token = extractTokenFromUrl();
+  
+  console.log('[ClawFi] Route change detected, token:', token);
   
   // If same token, no change needed
   if (token === currentToken && isOverlayMounted) {
@@ -140,13 +177,25 @@ async function handleRouteChange(): Promise<void> {
     return;
   }
   
-  // Check if overlay is enabled
-  const settings = await new Promise<{ clankerOverlayEnabled?: boolean; overlayEnabled?: boolean }>((resolve) => {
-    chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, resolve);
-  });
+  // Check if overlay is enabled (with fallback if background fails)
+  let overlayEnabled = true;
+  try {
+    const settings = await sendMessageWithRetry<{ 
+      clankerOverlayEnabled?: boolean; 
+      overlayEnabled?: boolean 
+    }>({ type: 'GET_SETTINGS' });
+    
+    if (settings) {
+      if (settings.clankerOverlayEnabled === false || settings.overlayEnabled === false) {
+        overlayEnabled = false;
+      }
+    }
+  } catch (err) {
+    console.warn('[ClawFi] Error getting settings, defaulting to enabled:', err);
+  }
   
-  // Check both clanker-specific and general overlay settings
-  if (settings.clankerOverlayEnabled === false || settings.overlayEnabled === false) {
+  if (!overlayEnabled) {
+    console.log('[ClawFi] Overlay disabled in settings');
     return;
   }
   
@@ -154,16 +203,19 @@ async function handleRouteChange(): Promise<void> {
   // Small delay to let page content load for metadata extraction
   setTimeout(() => {
     if (currentToken === token) {
+      console.log('[ClawFi] Rendering overlay for token:', token);
       const metadata = buildTokenMetadata(token);
       renderClankerOverlay(metadata);
       isOverlayMounted = true;
       
-      // Notify background
-      chrome.runtime.sendMessage({
+      // Notify background (non-blocking)
+      sendMessageWithRetry({
         type: 'DETECTED_TOKEN',
         token,
         chain: 'base',
         source: 'clanker',
+      }).catch(() => {
+        // Ignore errors
       });
     }
   }, 500);
@@ -201,13 +253,31 @@ function setupNavigationDetection(): void {
   window.addEventListener('hashchange', () => {
     handleRouteChange();
   });
+  
+  // Watch for DOM changes that might indicate navigation in Next.js/React apps
+  const observer = new MutationObserver(() => {
+    const newToken = extractTokenFromUrl();
+    if (newToken !== currentToken) {
+      handleRouteChange();
+    }
+  });
+  
+  // Observe URL changes through DOM mutations
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
 }
 
 /**
  * Initialize Clanker content script
  */
 function init(): void {
-  console.log('[ClawFi] Clanker content script initialized');
+  console.log('[ClawFi] Clanker content script initialized on:', window.location.href);
+  console.log('[ClawFi] Current pathname:', window.location.pathname);
+  
+  const token = extractTokenFromUrl();
+  console.log('[ClawFi] Token from URL:', token);
   
   // Setup navigation detection for SPA
   setupNavigationDetection();
@@ -218,10 +288,20 @@ function init(): void {
 
 // Start when DOM is ready
 if (document.readyState === 'loading') {
+  console.log('[ClawFi] Waiting for DOMContentLoaded...');
   document.addEventListener('DOMContentLoaded', init);
 } else {
+  console.log('[ClawFi] DOM already ready, initializing...');
   init();
 }
 
-export { extractTokenFromUrl, buildTokenMetadata, handleRouteChange };
+// Also try after a delay in case page is still loading
+setTimeout(() => {
+  const token = extractTokenFromUrl();
+  if (token && !isOverlayMounted) {
+    console.log('[ClawFi] Delayed check - token found but overlay not mounted, retrying...');
+    handleRouteChange();
+  }
+}, 2000);
 
+export { extractTokenFromUrl, buildTokenMetadata, handleRouteChange };

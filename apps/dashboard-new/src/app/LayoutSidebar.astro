@@ -9,12 +9,12 @@ import SideBar from './SideBar.astro';
 	<NavBarSidebar />
 	<SideBar />
 
-	<div class="flex pt-16 overflow-hidden bg-gray-900">
+	<div class="flex pt-16 overflow-hidden">
 		<div
 			id="main-content"
-			class="relative w-full h-full overflow-y-auto bg-gray-900 lg:ml-64 min-h-screen"
+			class="relative w-full h-full overflow-y-auto lg:ml-72 min-h-screen"
 		>
-			<main class="p-4 md:p-6">
+			<main class="p-4 md:p-6 lg:p-8">
 				<slot />
 			</main>
 
@@ -22,3 +22,26 @@ import SideBar from './SideBar.astro';
 		</div>
 	</div>
 </LayoutCommon>
+
+<script is:inline>
+	(function() {
+		var token = localStorage.getItem('clawfi_token');
+		if (!token) {
+			window.location.replace('/login');
+			return;
+		}
+		fetch('https://api.clawfi.ai/me', {
+			headers: { 'Authorization': 'Bearer ' + token }
+		}).then(function(res) {
+			if (res.status === 401) {
+				localStorage.removeItem('clawfi_token');
+				window.location.replace('/login');
+			}
+		}).catch(function() {});
+	})();
+
+	window.clawfiLogout = function() {
+		localStorage.removeItem('clawfi_token');
+		window.location.replace('/login');
+	};
+</script>

@@ -21,15 +21,13 @@ const { class: clazz } = Astro.props;
 		<meta name="author" content="ClawFi" />
 		<meta name="robots" content="noindex, nofollow" />
 		
-		<!-- Fonts -->
+		<!-- Fonts - SF Pro style -->
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
 		<script is:inline>
-			// Always default to dark mode for crypto dashboard
 			document.documentElement.classList.add('dark');
-			
 			if (localStorage.getItem('color-theme') === 'light') {
 				document.documentElement.classList.remove('dark');
 			}
@@ -38,11 +36,23 @@ const { class: clazz } = Astro.props;
 	<body
 		class:list={[
 			clazz,
-			'bg-gray-900 text-gray-100',
-			'scrollbar scrollbar-w-3 scrollbar-thumb-rounded-[0.25rem]',
-			'scrollbar-track-gray-900 scrollbar-thumb-gray-700',
+			'min-h-screen text-white antialiased',
 		]}
 	>
+		<!-- iOS-style dynamic background -->
+		<div class="fixed inset-0 -z-10 liquid-glass-bg">
+			<!-- Base gradient -->
+			<div class="absolute inset-0 bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f0f23]"></div>
+			
+			<!-- Animated color blobs - iOS style -->
+			<div class="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-blue-600/40 to-purple-600/30 blur-[120px] animate-blob"></div>
+			<div class="absolute top-[30%] right-[-20%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-cyan-500/30 to-blue-500/25 blur-[100px] animate-blob animation-delay-2000"></div>
+			<div class="absolute bottom-[-10%] left-[20%] w-[55%] h-[55%] rounded-full bg-gradient-to-br from-indigo-600/25 to-violet-500/20 blur-[110px] animate-blob animation-delay-4000"></div>
+			
+			<!-- Subtle noise for texture -->
+			<div class="absolute inset-0 opacity-[0.02]" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 256 256%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noise%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noise)%22/%3E%3C/svg%3E');"></div>
+		</div>
+		
 		<slot />
 	</body>
 </html>
@@ -52,51 +62,402 @@ const { class: clazz } = Astro.props;
 </script>
 
 <style is:global>
-	/* Custom scrollbar for dark theme */
-	::-webkit-scrollbar {
+	/* ============================================
+	   APPLE LIQUID GLASS DESIGN SYSTEM
+	   Based on iOS 26 / macOS Tahoe (WWDC 2025)
+	   ============================================ */
+	
+	:root {
+		/* Glass properties */
+		--glass-bg: rgba(255, 255, 255, 0.08);
+		--glass-bg-hover: rgba(255, 255, 255, 0.12);
+		--glass-bg-active: rgba(255, 255, 255, 0.15);
+		--glass-border: rgba(255, 255, 255, 0.18);
+		--glass-border-light: rgba(255, 255, 255, 0.12);
+		--glass-blur: 40px;
+		--glass-blur-heavy: 60px;
+		
+		/* Specular highlight (top edge refraction) */
+		--glass-specular: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 8%, transparent 40%);
+		--glass-specular-strong: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 5%, transparent 30%);
+		
+		/* Shadows */
+		--glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+		--glass-shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.3);
+		
+		/* Accent colors */
+		--accent-blue: #0A84FF;
+		--accent-blue-light: #5AC8FA;
+		--accent-teal: #64D2FF;
+	}
+	
+	/* Blob animation */
+	@keyframes blob {
+		0%, 100% { transform: translate(0, 0) scale(1); }
+		25% { transform: translate(20px, -30px) scale(1.05); }
+		50% { transform: translate(-20px, 20px) scale(0.95); }
+		75% { transform: translate(30px, 10px) scale(1.02); }
+	}
+	
+	.animate-blob {
+		animation: blob 20s ease-in-out infinite;
+	}
+	
+	.animation-delay-2000 {
+		animation-delay: -7s;
+	}
+	
+	.animation-delay-4000 {
+		animation-delay: -14s;
+	}
+	
+	/* ============================================
+	   LIQUID GLASS COMPONENTS
+	   ============================================ */
+	
+	/* Base glass panel - iOS style */
+	.glass {
+		background: var(--glass-bg);
+		backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+		-webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+		border: 1px solid var(--glass-border);
+		border-radius: 20px;
+		box-shadow: var(--glass-shadow);
+		position: relative;
+		overflow: hidden;
+	}
+	
+	/* Specular highlight overlay */
+	.glass::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: var(--glass-specular);
+		pointer-events: none;
+		border-radius: inherit;
+	}
+	
+	/* Elevated glass (modals, popovers) */
+	.glass-elevated {
+		background: rgba(255, 255, 255, 0.1);
+		backdrop-filter: blur(var(--glass-blur-heavy)) saturate(200%);
+		-webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(200%);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		border-radius: 24px;
+		box-shadow: var(--glass-shadow-elevated);
+		position: relative;
+	}
+	
+	.glass-elevated::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: var(--glass-specular-strong);
+		pointer-events: none;
+		border-radius: inherit;
+	}
+	
+	/* Sidebar/Navigation glass - more subtle */
+	.glass-sidebar {
+		background: rgba(255, 255, 255, 0.05);
+		backdrop-filter: blur(50px) saturate(150%);
+		-webkit-backdrop-filter: blur(50px) saturate(150%);
+		border-right: 1px solid rgba(255, 255, 255, 0.08);
+	}
+	
+	/* Navbar glass */
+	.glass-nav {
+		background: rgba(255, 255, 255, 0.06);
+		backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+		-webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	}
+	
+	/* ============================================
+	   LIQUID GLASS BUTTONS - Pill shaped
+	   ============================================ */
+	
+	.btn-glass {
+		background: rgba(255, 255, 255, 0.1);
+		backdrop-filter: blur(20px);
+		-webkit-backdrop-filter: blur(20px);
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		border-radius: 100px; /* Pill shape */
+		padding: 10px 20px;
+		color: white;
+		font-weight: 500;
+		font-size: 14px;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		position: relative;
+		overflow: hidden;
+	}
+	
+	.btn-glass::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+		pointer-events: none;
+	}
+	
+	.btn-glass:hover {
+		background: rgba(255, 255, 255, 0.15);
+		border-color: rgba(255, 255, 255, 0.25);
+		transform: scale(1.02);
+	}
+	
+	.btn-glass:active {
+		transform: scale(0.98);
+		background: rgba(255, 255, 255, 0.2);
+	}
+	
+	/* Primary button - tinted glass */
+	.btn-glass-primary {
+		background: rgba(10, 132, 255, 0.5);
+		border-color: rgba(10, 132, 255, 0.6);
+	}
+	
+	.btn-glass-primary::before {
+		background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(10, 132, 255, 0.1) 50%, transparent 100%);
+	}
+	
+	.btn-glass-primary:hover {
+		background: rgba(10, 132, 255, 0.6);
+		border-color: rgba(10, 132, 255, 0.7);
+		box-shadow: 0 4px 20px rgba(10, 132, 255, 0.4);
+	}
+	
+	/* ============================================
+	   LIQUID GLASS INPUTS
+	   ============================================ */
+	
+	.input-glass {
+		background: rgba(255, 255, 255, 0.06);
+		backdrop-filter: blur(20px);
+		-webkit-backdrop-filter: blur(20px);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 14px;
+		padding: 12px 16px;
+		color: white;
+		font-size: 15px;
+		transition: all 0.2s ease;
+		width: 100%;
+	}
+	
+	.input-glass::placeholder {
+		color: rgba(255, 255, 255, 0.4);
+	}
+	
+	.input-glass:focus {
+		outline: none;
+		background: rgba(255, 255, 255, 0.1);
+		border-color: var(--accent-blue);
+		box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.2);
+	}
+	
+	/* ============================================
+	   LIQUID GLASS CARDS
+	   ============================================ */
+	
+	.card-glass {
+		background: rgba(255, 255, 255, 0.07);
+		backdrop-filter: blur(30px) saturate(150%);
+		-webkit-backdrop-filter: blur(30px) saturate(150%);
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		border-radius: 20px;
+		padding: 20px;
+		position: relative;
+		transition: all 0.3s ease;
+	}
+	
+	.card-glass::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.02) 15%, transparent 50%);
+		pointer-events: none;
+		border-radius: inherit;
+	}
+	
+	.card-glass:hover {
+		background: rgba(255, 255, 255, 0.1);
+		border-color: rgba(255, 255, 255, 0.18);
+		transform: translateY(-2px);
+		box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+	}
+	
+	/* ============================================
+	   LIQUID GLASS BADGES - Pill shaped
+	   ============================================ */
+	
+	.badge-glass {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		background: rgba(255, 255, 255, 0.1);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		border-radius: 100px;
+		padding: 4px 12px;
+		font-size: 12px;
+		font-weight: 500;
+	}
+	
+	.badge-glass-blue {
+		background: rgba(10, 132, 255, 0.2);
+		border-color: rgba(10, 132, 255, 0.4);
+		color: #5AC8FA;
+	}
+	
+	.badge-glass-green {
+		background: rgba(48, 209, 88, 0.2);
+		border-color: rgba(48, 209, 88, 0.4);
+		color: #30D158;
+	}
+	
+	.badge-glass-red {
+		background: rgba(255, 69, 58, 0.2);
+		border-color: rgba(255, 69, 58, 0.4);
+		color: #FF6961;
+	}
+	
+	.badge-glass-orange {
+		background: rgba(255, 159, 10, 0.2);
+		border-color: rgba(255, 159, 10, 0.4);
+		color: #FFD60A;
+	}
+	
+	/* ============================================
+	   NAV ITEMS - iOS Tab Bar style
+	   ============================================ */
+	
+	.nav-item-glass {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 12px 16px;
+		border-radius: 14px;
+		color: rgba(255, 255, 255, 0.6);
+		font-size: 14px;
+		font-weight: 500;
+		transition: all 0.2s ease;
+		position: relative;
+	}
+	
+	.nav-item-glass:hover {
+		color: rgba(255, 255, 255, 0.9);
+		background: rgba(255, 255, 255, 0.06);
+	}
+	
+	.nav-item-glass.active {
+		color: white;
+		background: rgba(10, 132, 255, 0.25);
+		border: 1px solid rgba(10, 132, 255, 0.4);
+	}
+	
+	.nav-item-glass.active::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+		border-radius: inherit;
+		pointer-events: none;
+	}
+	
+	/* ============================================
+	   STATUS INDICATORS - iOS style
+	   ============================================ */
+	
+	.status-dot {
 		width: 8px;
 		height: 8px;
+		border-radius: 50%;
+		position: relative;
+	}
+	
+	.status-dot::after {
+		content: '';
+		position: absolute;
+		inset: -2px;
+		border-radius: 50%;
+		opacity: 0.4;
+		filter: blur(4px);
+	}
+	
+	.status-dot-online {
+		background: #30D158;
+		box-shadow: 0 0 8px #30D158;
+	}
+	
+	.status-dot-online::after {
+		background: #30D158;
+	}
+	
+	.status-dot-offline {
+		background: #FF453A;
+		box-shadow: 0 0 8px #FF453A;
+	}
+	
+	.status-dot-warning {
+		background: #FF9F0A;
+		box-shadow: 0 0 8px #FF9F0A;
+	}
+	
+	/* ============================================
+	   SCROLLBAR - Minimal iOS style
+	   ============================================ */
+	
+	::-webkit-scrollbar {
+		width: 6px;
+		height: 6px;
 	}
 	
 	::-webkit-scrollbar-track {
-		background: #1f2937;
+		background: transparent;
 	}
 	
 	::-webkit-scrollbar-thumb {
-		background: #4b5563;
-		border-radius: 4px;
+		background: rgba(255, 255, 255, 0.15);
+		border-radius: 3px;
 	}
 	
 	::-webkit-scrollbar-thumb:hover {
-		background: #6b7280;
+		background: rgba(255, 255, 255, 0.25);
 	}
 	
-	/* Terminal-style cursor animation */
-	@keyframes blink {
-		0%, 50% { opacity: 1; }
-		51%, 100% { opacity: 0; }
+	/* ============================================
+	   TYPOGRAPHY
+	   ============================================ */
+	
+	.text-primary {
+		color: var(--accent-blue);
 	}
 	
-	.cursor-blink {
-		animation: blink 1s step-end infinite;
+	.text-secondary {
+		color: rgba(255, 255, 255, 0.6);
 	}
 	
-	/* Glow effects */
-	.glow-primary {
-		box-shadow: 0 0 20px rgba(217, 70, 239, 0.3);
+	.text-tertiary {
+		color: rgba(255, 255, 255, 0.4);
 	}
 	
-	.glow-primary-hover:hover {
-		box-shadow: 0 0 30px rgba(217, 70, 239, 0.5);
+	/* ============================================
+	   ANIMATIONS
+	   ============================================ */
+	
+	@keyframes fadeIn {
+		from { opacity: 0; transform: translateY(10px); }
+		to { opacity: 1; transform: translateY(0); }
 	}
 	
-	/* Status dot animation */
-	@keyframes pulse-dot {
-		0%, 100% { transform: scale(1); opacity: 1; }
-		50% { transform: scale(1.2); opacity: 0.7; }
+	.animate-fadeIn {
+		animation: fadeIn 0.3s ease-out;
 	}
 	
-	.pulse-dot {
-		animation: pulse-dot 2s ease-in-out infinite;
+	/* Selection */
+	::selection {
+		background: rgba(10, 132, 255, 0.4);
+		color: white;
 	}
 </style>

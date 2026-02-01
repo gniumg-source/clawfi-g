@@ -1,14 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#d946ef"/>
-      <stop offset="100%" style="stop-color:#a21caf"/>
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="8" fill="url(#grad)"/>
-  <path d="M16 6L6 11l10 5 10-5-10-5z" fill="white" opacity="0.9"/>
-  <path d="M6 21l10 5 10-5" stroke="white" stroke-width="2" fill="none" opacity="0.7"/>
-  <path d="M6 16l10 5 10-5" stroke="white" stroke-width="2" fill="none" opacity="0.8"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#000"/>
+  
+  <!-- Body -->
+  <rect x="320" y="320" width="384" height="256" fill="#2563EB"/>
+  
+  <!-- Eyes -->
+  <rect x="416" y="192" width="64" height="64" fill="#2563EB"/>
+  <rect x="544" y="192" width="64" height="64" fill="#2563EB"/>
+  <rect x="432" y="208" width="32" height="32" fill="#000"/>
+  <rect x="560" y="208" width="32" height="32" fill="#000"/>
+  
+  <!-- Eye stalks -->
+  <rect x="432" y="256" width="32" height="64" fill="#2563EB"/>
+  <rect x="560" y="256" width="32" height="64" fill="#2563EB"/>
+  
+  <!-- Left claw -->
+  <rect x="128" y="352" width="192" height="128" fill="#2563EB"/>
+  <polygon points="128,384 64,320 64,416 128,480" fill="#2563EB"/>
+  <rect x="192" y="320" width="64" height="32" fill="#2563EB"/>
+  <rect x="192" y="448" width="64" height="32" fill="#2563EB"/>
+  <polygon points="224,352 160,416 224,480 288,416" fill="#000" opacity="0.3"/>
+  
+  <!-- Right claw -->
+  <rect x="704" y="352" width="192" height="128" fill="#2563EB"/>
+  <polygon points="896,384 960,320 960,416 896,480" fill="#2563EB"/>
+  <rect x="768" y="320" width="64" height="32" fill="#2563EB"/>
+  <rect x="768" y="448" width="64" height="32" fill="#2563EB"/>
+  <polygon points="800,352 864,416 800,480 736,416" fill="#000" opacity="0.3"/>
+  
+  <!-- Left legs -->
+  <rect x="192" y="576" width="128" height="32" transform="rotate(-30 256 592)" fill="#2563EB"/>
+  <rect x="160" y="640" width="128" height="32" transform="rotate(-45 224 656)" fill="#2563EB"/>
+  <rect x="128" y="704" width="128" height="32" transform="rotate(-60 192 720)" fill="#2563EB"/>
+  
+  <!-- Right legs -->
+  <rect x="704" y="576" width="128" height="32" transform="rotate(30 768 592)" fill="#2563EB"/>
+  <rect x="736" y="640" width="128" height="32" transform="rotate(45 800 656)" fill="#2563EB"/>
+  <rect x="768" y="704" width="128" height="32" transform="rotate(60 832 720)" fill="#2563EB"/>
 </svg>
-
-

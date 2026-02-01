@@ -36,6 +36,30 @@ import LayoutSidebar from '../app/LayoutSidebar.astro';
 			</div>
 		</div>
 
+		<!-- Extension Token -->
+		<div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+			<div class="px-6 py-4 border-b border-gray-700">
+				<h2 class="text-lg font-semibold text-white">Browser Extension</h2>
+			</div>
+			<div class="p-6 space-y-4">
+				<div>
+					<label class="block text-sm font-medium text-gray-300 mb-2">Auth Token (for ClawFi Extension)</label>
+					<div class="flex gap-2">
+						<input
+							type="text"
+							id="auth-token"
+							class="flex-1 px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-gray-300 font-mono text-xs"
+							readonly
+						/>
+						<button id="copy-token-btn" class="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors whitespace-nowrap">
+							Copy Token
+						</button>
+					</div>
+					<p class="text-xs text-gray-500 mt-2">Paste this token in the ClawFi browser extension settings</p>
+				</div>
+			</div>
+		</div>
+
 		<!-- Notifications -->
 		<div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
 			<div class="px-6 py-4 border-b border-gray-700">
@@ -98,6 +122,30 @@ import LayoutSidebar from '../app/LayoutSidebar.astro';
 	
 	const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001';
 	document.getElementById('api-url')?.setAttribute('value', API_URL);
+	
+	// Show auth token (truncated for display)
+	const authTokenInput = document.getElementById('auth-token');
+	if (authTokenInput && token) {
+		authTokenInput.value = token;
+	}
+	
+	// Copy token button
+	document.getElementById('copy-token-btn')?.addEventListener('click', async () => {
+		const btn = document.getElementById('copy-token-btn');
+		if (token) {
+			await navigator.clipboard.writeText(token);
+			if (btn) {
+				btn.textContent = 'Copied!';
+				btn.classList.remove('bg-primary-600', 'hover:bg-primary-700');
+				btn.classList.add('bg-green-600');
+				setTimeout(() => {
+					btn.textContent = 'Copy Token';
+					btn.classList.add('bg-primary-600', 'hover:bg-primary-700');
+					btn.classList.remove('bg-green-600');
+				}, 2000);
+			}
+		}
+	});
 	
 	document.getElementById('logout-btn')?.addEventListener('click', () => {
 		localStorage.removeItem('clawfi_token');

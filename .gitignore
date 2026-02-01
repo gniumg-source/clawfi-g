@@ -6,12 +6,51 @@ node_modules/
 dist/
 .next/
 out/
+build/
 
-# Environment
+# Environment - SENSITIVE
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
 !.env.example
+!env.example
+
+# Secrets and credentials - NEVER COMMIT
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+secrets/
+credentials/
+**/secrets.json
+**/credentials.json
+**/serviceAccount.json
+*.secret
+.secrets
+
+# JWT and Auth tokens
+jwt.json
+auth.json
+tokens.json
+
+# Wallet and Crypto keys - CRITICAL
+wallet.json
+keystore/
+*.keystore
+private_keys/
+seed_phrase.txt
+mnemonic.txt
+
+# Database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+prisma/dev.db
+data/
 
 # IDE
 .idea/
@@ -19,9 +58,11 @@ out/
 *.swp
 *.swo
 .DS_Store
+.cursor/
 
 # Testing
 coverage/
+.nyc_output/
 
 # Turbo
 .turbo/
@@ -30,16 +71,35 @@ coverage/
 *.log
 npm-debug.log*
 pnpm-debug.log*
-
-# Prisma
-*.db
-*.db-journal
+logs/
 
 # Chrome extension
 apps/extension/dist/
 
+# Deployment
+deploy.sh
+deploy-*.sh
+*.deploy
+
+# SSH and server
+id_rsa
+id_rsa.pub
+*.ppk
+known_hosts
+
 # Misc
 .cache/
 tmp/
+temp/
+*.tmp
+*.bak
+*.backup
 
+# OS files
+Thumbs.db
+Desktop.ini
 
+# Package manager locks (optional, uncomment if needed)
+# pnpm-lock.yaml
+# package-lock.json
+# yarn.lock

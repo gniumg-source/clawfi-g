@@ -1,6 +1,6 @@
 // ClawFi Dashboard Constants
 
-export const API_URL = 'http://107.189.16.236:3001';
+export const API_URL = 'https://api.clawfi.ai';
 
 export const SITE_TITLE = 'ClawFi';
 

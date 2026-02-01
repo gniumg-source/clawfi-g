@@ -2,180 +2,134 @@
 import ColorModeSwitcher from '../components/ColorModeSwitcher.astro';
 ---
 
-<nav class="fixed z-30 w-full bg-gray-900 border-b border-gray-800">
-	<div class="px-3 py-3 lg:px-5 lg:pl-3">
+<nav class="fixed z-30 w-full glass-nav">
+	<div class="px-4 py-3 lg:px-6">
 		<div class="flex items-center justify-between">
-			<div class="flex items-center justify-start">
+			<div class="flex items-center gap-4">
+				<!-- Mobile menu button -->
 				<button
 					id="toggleSidebarMobile"
 					aria-expanded="true"
 					aria-controls="sidebar"
-					class="p-2 text-gray-400 rounded cursor-pointer lg:hidden hover:text-white hover:bg-gray-800 focus:bg-gray-800 focus:ring-2 focus:ring-gray-700"
+					class="p-2 rounded-xl lg:hidden text-white/60 hover:text-white hover:bg-white/10 transition-all"
 				>
-					<svg
-						id="toggleSidebarMobileHamburger"
-						class="w-6 h-6"
-						fill="currentColor"
-						viewBox="0 0 20 20"
-					>
+					<svg id="toggleSidebarMobileHamburger" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
 						<path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
 					</svg>
-					<svg
-						id="toggleSidebarMobileClose"
-						class="hidden w-6 h-6"
-						fill="currentColor"
-						viewBox="0 0 20 20"
-					>
+					<svg id="toggleSidebarMobileClose" class="hidden w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
 						<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
 					</svg>
 				</button>
 				
-				<a href="/" class="flex items-center ml-2 md:mr-24">
-					<!-- ClawFi Logo -->
-					<div class="flex items-center justify-center w-10 h-10 mr-3 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-lg shadow-primary-500/30">
-						<svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-							<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-						</svg>
-					</div>
-					<span class="self-center text-xl font-bold whitespace-nowrap text-white">
-						Claw<span class="text-primary-400">Fi</span>
-					</span>
+				<!-- Logo -->
+				<a href="/" class="flex items-center">
+					<img src="/logo.png" alt="ClawFi" class="h-8 w-auto" />
 				</a>
 
-				<!-- Search -->
-				<div class="hidden lg:block lg:pl-3.5">
-					<label for="topbar-search" class="sr-only">Search</label>
-					<div class="relative mt-1 lg:w-96">
-						<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-							<svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+				<!-- Search - Glass pill -->
+				<div class="hidden lg:block">
+					<div class="relative">
+						<div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+							<svg class="w-4 h-4 text-white/40" fill="currentColor" viewBox="0 0 20 20">
 								<path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
 							</svg>
 						</div>
 						<input
 							type="text"
 							id="topbar-search"
-							class="bg-gray-800 border border-gray-700 text-gray-200 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5 placeholder-gray-500"
+							class="input-glass w-80 pl-11 py-2.5 rounded-full text-sm"
 							placeholder="Search tokens, wallets..."
 						/>
 					</div>
 				</div>
 			</div>
 
-			<div class="flex items-center gap-2">
-				<!-- Kill Switch Indicator -->
-				<div id="killswitch-indicator" class="hidden items-center px-3 py-1.5 rounded-lg bg-red-900/50 border border-red-700">
-					<span class="w-2 h-2 mr-2 bg-red-500 rounded-full animate-pulse"></span>
-					<span class="text-sm font-medium text-red-400">Kill Switch Active</span>
+			<div class="flex items-center gap-3">
+				<!-- Kill Switch - Glass badge (hidden by default via inline style) -->
+				<div id="killswitch-indicator" class="items-center badge-glass badge-glass-red" style="display: none;">
+					<span class="status-dot status-dot-offline mr-2"></span>
+					<span class="text-sm font-medium">Kill Switch Active</span>
 				</div>
 
 				<!-- Mobile Search -->
 				<button
 					id="toggleSidebarMobileSearch"
 					type="button"
-					class="p-2 text-gray-400 rounded-lg lg:hidden hover:text-white hover:bg-gray-800"
+					class="p-2 rounded-xl lg:hidden text-white/60 hover:text-white hover:bg-white/10 transition-all"
 				>
-					<span class="sr-only">Search</span>
-					<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+					<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
 						<path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
 					</svg>
 				</button>
 
-				<!-- Notifications -->
+				<!-- Notifications - Glass button -->
 				<button
 					type="button"
 					data-dropdown-toggle="notification-dropdown"
-					class="p-2 text-gray-400 rounded-lg hover:text-white hover:bg-gray-800 relative"
+					class="relative p-2.5 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all"
 				>
-					<span class="sr-only">View notifications</span>
-					<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+					<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
 						<path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path>
 					</svg>
-					<span id="notification-badge" class="hidden absolute top-1 right-1 w-2 h-2 bg-primary-500 rounded-full"></span>
+					<span id="notification-badge" class="hidden absolute top-1.5 right-1.5 w-2 h-2 bg-[#0A84FF] rounded-full"></span>
 				</button>
 				
-				<!-- Notifications Dropdown -->
+				<!-- Notifications Dropdown - Elevated glass -->
 				<div
-					class="z-50 hidden max-w-sm my-4 overflow-hidden text-base list-none bg-gray-800 divide-y divide-gray-700 rounded-lg shadow-lg border border-gray-700"
+					class="z-50 hidden max-w-sm glass-elevated overflow-hidden"
 					id="notification-dropdown"
 				>
-					<div class="block px-4 py-2 text-base font-medium text-center text-gray-300 bg-gray-800">
+					<div class="px-4 py-3 text-sm font-medium text-center border-b border-white/10">
 						Recent Signals
 					</div>
 					<div id="notification-list" class="max-h-64 overflow-y-auto">
-						<div class="px-4 py-3 text-sm text-gray-400 text-center">
+						<div class="px-4 py-6 text-sm text-white/40 text-center">
 							No new signals
 						</div>
 					</div>
 					<a
 						href="/signals"
-						class="block py-2 text-sm font-medium text-center text-primary-400 bg-gray-800 hover:bg-gray-700"
+						class="block py-3 text-sm font-medium text-center text-[#0A84FF] border-t border-white/10 hover:bg-white/5 transition-all"
 					>
-						<div class="inline-flex items-center">
-							<svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-								<path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-								<path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
-							</svg>
-							View all signals
-						</div>
+						View all signals
 					</a>
 				</div>
 
 				<ColorModeSwitcher />
 
-				<!-- Profile -->
-				<div class="flex items-center ml-3">
-					<div>
-						<button
-							type="button"
-							class="flex items-center text-sm rounded-full focus:ring-4 focus:ring-gray-700"
-							id="user-menu-button-2"
-							aria-expanded="false"
-							data-dropdown-toggle="dropdown-2"
-						>
-							<span class="sr-only">Open user menu</span>
-							<div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold">
-								A
-							</div>
-						</button>
-					</div>
+				<!-- Profile - Glass avatar -->
+				<div class="flex items-center ml-1">
+					<button
+						type="button"
+						class="flex items-center p-1 rounded-full hover:bg-white/10 transition-all"
+						id="user-menu-button-2"
+						data-dropdown-toggle="dropdown-2"
+					>
+						<div class="w-9 h-9 rounded-full bg-gradient-to-br from-[#0A84FF] to-[#5856D6] flex items-center justify-center text-white font-semibold text-sm shadow-lg shadow-blue-500/30">
+							A
+						</div>
+					</button>
 					
-					<!-- Profile Dropdown -->
+					<!-- Profile Dropdown - Elevated glass -->
 					<div
-						class="z-50 hidden my-4 text-base list-none bg-gray-800 divide-y divide-gray-700 rounded-lg shadow border border-gray-700"
+						class="z-50 hidden glass-elevated min-w-[200px] overflow-hidden"
 						id="dropdown-2"
 					>
-						<div class="px-4 py-3" role="none">
-							<p class="text-sm text-white" role="none" id="user-name">Admin</p>
-							<p class="text-sm font-medium text-gray-400 truncate" role="none" id="user-email">
-								admin@clawfi.io
-							</p>
+						<div class="px-4 py-3 border-b border-white/10">
+							<p class="text-sm text-white font-medium" id="user-name">Admin</p>
+							<p class="text-xs text-white/50 truncate" id="user-email">admin@clawfi.io</p>
 						</div>
-						<ul class="py-1" role="none">
-							<li>
-								<a href="/" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white" role="menuitem">
-									Dashboard
-								</a>
-							</li>
-							<li>
-								<a href="/settings" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white" role="menuitem">
-									Settings
-								</a>
-							</li>
-							<li>
-								<a href="/audit" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white" role="menuitem">
-									Audit Log
-								</a>
-							</li>
-							<li>
-								<button
-									id="logout-btn"
-									class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300"
-									role="menuitem"
-								>
-									Sign out
-								</button>
-							</li>
-						</ul>
+						<div class="py-1">
+							<a href="/" class="block px-4 py-2.5 text-sm text-white/80 hover:bg-white/5 hover:text-white transition-all">Dashboard</a>
+							<a href="/settings" class="block px-4 py-2.5 text-sm text-white/80 hover:bg-white/5 hover:text-white transition-all">Settings</a>
+							<a href="/audit" class="block px-4 py-2.5 text-sm text-white/80 hover:bg-white/5 hover:text-white transition-all">Audit Log</a>
+							<button
+								id="logout-btn"
+								class="w-full text-left px-4 py-2.5 text-sm text-[#FF453A] hover:bg-red-500/10 transition-all"
+							>
+								Sign out
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -184,9 +138,41 @@ import ColorModeSwitcher from '../components/ColorModeSwitcher.astro';
 </nav>
 
 <script>
-	// Handle logout
 	document.getElementById('logout-btn')?.addEventListener('click', () => {
-		localStorage.removeItem('clawfi_token');
-		window.location.href = '/login';
+		if (typeof window.clawfiLogout === 'function') {
+			window.clawfiLogout();
+		} else {
+			localStorage.removeItem('clawfi_token');
+			window.location.replace('/login');
+		}
 	});
+
+	const token = localStorage.getItem('clawfi_token');
+	if (token) {
+		// Fetch user info
+		fetch('https://api.clawfi.ai/me', {
+			headers: { 'Authorization': 'Bearer ' + token }
+		}).then(res => res.json()).then(data => {
+			if (data.success && data.data) {
+				const nameEl = document.getElementById('user-name');
+				const emailEl = document.getElementById('user-email');
+				if (nameEl) nameEl.textContent = data.data.name || 'User';
+				if (emailEl) emailEl.textContent = data.data.email || '';
+			}
+		}).catch(() => {});
+
+		// Check kill switch status
+		fetch('https://api.clawfi.ai/risk/policy', {
+			headers: { 'Authorization': 'Bearer ' + token }
+		}).then(res => res.json()).then(data => {
+			const indicator = document.getElementById('killswitch-indicator');
+			if (indicator && data.success && data.data) {
+				if (data.data.killSwitchActive) {
+					indicator.style.display = 'inline-flex';
+				} else {
+					indicator.style.display = 'none';
+				}
+			}
+		}).catch(() => {});
+	}
 </script>
