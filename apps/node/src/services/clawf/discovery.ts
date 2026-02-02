@@ -467,16 +467,22 @@ export class DiscoveryEngine {
     }
 
     // ============================================
-    // SECOND WAVE: V-shaped recovery (high success rate)
-    // Negative 6h but strong positive 1h = bounce confirmed
+    // V-RECOVERY: Proven high-success pattern
+    // Deep 6h dip + strong 1h recovery = momentum building
     // ============================================
     const h6Change = token.priceChange6h || 0;
-    if (h6Change < -30 && token.priceChange1h > 10 && buyRatio > 0.55) {
-      momentum += 25; // Higher bonus - this pattern works!
-      signals.push(`🔥 SECOND WAVE: V-recovery +${token.priceChange1h.toFixed(0)}% from -${Math.abs(h6Change).toFixed(0)}% dip`);
+    
+    // STRONGEST: Deep dip + strong bounce + buying pressure
+    if (h6Change < -50 && token.priceChange1h > 15 && buyRatio > 0.55) {
+      momentum += 35; // Highest bonus - validated pattern!
+      signals.push(`🔥 V-RECOVERY: +${token.priceChange1h.toFixed(0)}% bounce from -${Math.abs(h6Change).toFixed(0)}% dip - VALIDATED PATTERN`);
+    }
+    else if (h6Change < -30 && token.priceChange1h > 10 && buyRatio > 0.55) {
+      momentum += 25;
+      signals.push(`🔥 BOUNCE: V-recovery +${token.priceChange1h.toFixed(0)}% from dip`);
     }
     else if (h6Change < -20 && token.priceChange1h > 5 && buyRatio > 0.55) {
-      momentum += 10;
+      momentum += 15;
       signals.push(`📈 Bounce forming: +${token.priceChange1h.toFixed(0)}% recovery`);
     }
 
