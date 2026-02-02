@@ -351,13 +351,30 @@ export class DiscoveryEngine {
         : `${(volumeToMcap * 100).toFixed(0)}% vol/mcap`,
     });
 
+    // CONDITION 8: MOMENTUM ACCELERATION (price rising fast for fresh tokens)
+    // Fresh token with >50% 1h gain AND high buy ratio = acceleration phase
+    const hasMomentumAcceleration = 
+      ageHours < 1 && 
+      candidate.priceChange1h > 50 && 
+      buyRatio > 0.60 &&
+      totalTxns > 30;
+    conditions.push({
+      name: 'Momentum Acceleration',
+      passed: hasMomentumAcceleration,
+      value: `${candidate.priceChange1h.toFixed(0)}% in ${(ageHours * 60).toFixed(0)}min`,
+      threshold: '> 50% gain in < 1h with high activity',
+      evidence: hasMomentumAcceleration
+        ? `🚀 ACCELERATING: +${candidate.priceChange1h.toFixed(0)}% in ${(ageHours * 60).toFixed(0)} min - parabolic potential!`
+        : `${candidate.priceChange1h.toFixed(0)}% 1h change`,
+    });
+
     // Calculate GEM score
     const { scores, signals } = this.calculateGemScores(candidate, conditions, ageHours, buyRatio, volumeToMcap);
     candidate.scores = scores;
     candidate.signals = signals;
 
     const conditionsPassed = conditions.filter(c => c.passed).length;
-    const qualifies = conditionsPassed >= 4; // Need 4 of 7 conditions for GEM status
+    const qualifies = conditionsPassed >= 4; // Need 4 of 8 conditions for GEM status
 
     return {
       candidate,
@@ -462,9 +479,24 @@ export class DiscoveryEngine {
       momentum += 10;
     }
 
+    // MOMENTUM ACCELERATION BONUS
+    // Fresh token pumping hard = parabolic potential
+    if (ageHours < 0.5 && token.priceChange1h > 100 && buyRatio > 0.60) {
+      gemBonus += 30;
+      signals.push(`🚀 PARABOLIC: +${token.priceChange1h.toFixed(0)}% in ${(ageHours * 60).toFixed(0)} min!`);
+    } else if (ageHours < 1 && token.priceChange1h > 50 && buyRatio > 0.55) {
+      gemBonus += 20;
+      signals.push(`📈 ACCELERATING: +${token.priceChange1h.toFixed(0)}% momentum`);
+    }
+
     // PRIME GEM SIGNAL
     if (gemBonus >= 50 && momentum >= 30 && buyRatio > 0.60 && token.fdv < 50000 && ageHours < 2) {
       signals.unshift(`🚨 PRIME GEM: Ultra-early, ultra-low mcap, strong buying - 100x POTENTIAL`);
+    }
+
+    // MOONSHOT SIGNAL - The ultimate 100x indicator
+    if (ageHours < 0.5 && token.fdv < 30000 && buyRatio > 0.70 && token.priceChange1h > 50 && totalTxns > 50) {
+      signals.unshift(`🌙 MOONSHOT ALERT: All 100x indicators aligned!`);
     }
 
     // Standard scoring
