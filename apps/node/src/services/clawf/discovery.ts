@@ -305,11 +305,28 @@ export class DiscoveryEngine {
     const liqRatio = token.fdv > 0 ? (token.liquidity / token.fdv) * 100 : 0;
 
     // ============================================
-    // CRITICAL: Negative 1h = DUMP, skip
+    // CRITICAL: Trend Analysis (1h + 6h combo)
     // ============================================
-    if (token.priceChange1h < -5) {
-      momentum -= 30; // Heavy penalty for dumps
+    const h6 = token.priceChange6h || 0;
+    
+    // WORST: Still dumping (negative 6h AND negative 1h)
+    if (h6 < -50 && token.priceChange1h < 0) {
+      momentum -= 50; // Heavy penalty - still in freefall
+      signals.push(`⛔ FREEFALL: -${Math.abs(h6).toFixed(0)}% 6h, still dropping - AVOID`);
+    }
+    else if (token.priceChange1h < -10) {
+      momentum -= 35; // Heavy penalty for active dumps
       signals.push(`⛔ Dumping ${token.priceChange1h.toFixed(0)}% - AVOID`);
+    }
+    else if (token.priceChange1h < -5) {
+      momentum -= 20;
+      signals.push(`⚠️ Weak: ${token.priceChange1h.toFixed(0)}% 1h`);
+    }
+    
+    // BEST: Bouncing from dip (negative 6h BUT positive 1h)
+    if (h6 < -30 && token.priceChange1h > 10) {
+      momentum += 30;
+      signals.push(`🚀 BOUNCE: Recovering +${token.priceChange1h.toFixed(0)}% from 6h dip`);
     }
 
     // ============================================
@@ -443,12 +460,17 @@ export class DiscoveryEngine {
     }
 
     // ============================================
-    // SECOND WAVE: Recovered from dip with strength
-    // Negative 6h but positive 1h = bounce in progress
+    // SECOND WAVE: V-shaped recovery (high success rate)
+    // Negative 6h but strong positive 1h = bounce confirmed
     // ============================================
-    if (token.priceChange6h < -30 && token.priceChange1h > 5 && buyRatio > 0.55) {
-      momentum += 15;
-      signals.push(`📈 SECOND WAVE: Bouncing +${token.priceChange1h.toFixed(0)}% from dip`);
+    const h6Change = token.priceChange6h || 0;
+    if (h6Change < -30 && token.priceChange1h > 10 && buyRatio > 0.55) {
+      momentum += 25; // Higher bonus - this pattern works!
+      signals.push(`🔥 SECOND WAVE: V-recovery +${token.priceChange1h.toFixed(0)}% from -${Math.abs(h6Change).toFixed(0)}% dip`);
+    }
+    else if (h6Change < -20 && token.priceChange1h > 5 && buyRatio > 0.55) {
+      momentum += 10;
+      signals.push(`📈 Bounce forming: +${token.priceChange1h.toFixed(0)}% recovery`);
     }
 
     // Liquidity Score (0-100)
