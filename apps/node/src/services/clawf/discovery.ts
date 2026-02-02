@@ -433,6 +433,24 @@ export class DiscoveryEngine {
       momentum += 5;
     }
 
+    // ============================================
+    // COILING PATTERN: Price tight + volume building = explosion incoming
+    // Price stable (-10% to +10% 1h) but high activity = pressure building
+    // ============================================
+    if (Math.abs(token.priceChange1h) < 10 && volumeRatio > 0.5 && totalTxns > 500) {
+      momentum += 20;
+      signals.push(`🎯 COILING: Price stable, volume building - breakout imminent`);
+    }
+
+    // ============================================
+    // SECOND WAVE: Recovered from dip with strength
+    // Negative 6h but positive 1h = bounce in progress
+    // ============================================
+    if (token.priceChange6h < -30 && token.priceChange1h > 5 && buyRatio > 0.55) {
+      momentum += 15;
+      signals.push(`📈 SECOND WAVE: Bouncing +${token.priceChange1h.toFixed(0)}% from dip`);
+    }
+
     // Liquidity Score (0-100)
     let liquidity = 0;
     
