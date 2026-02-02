@@ -151,9 +151,6 @@ async function fetchClanker<T>(endpoint: string, params?: Record<string, string 
 	const response = await fetch(url.toString(), { headers });
 	
 	if (!response.ok) {
-		if (response.status === 401 && typeof window !== 'undefined') {
-			window.location.href = '/login';
-		}
 		const error = await response.json().catch(() => ({ error: { message: 'Request failed' } }));
 		throw new Error(error.error?.message || `Clanker API error: ${response.status}`);
 	}

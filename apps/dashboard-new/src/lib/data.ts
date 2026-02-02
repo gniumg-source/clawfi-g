@@ -49,12 +49,6 @@ export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): 
 	});
 	
 	if (!response.ok) {
-		if (response.status === 401) {
-			setAuthToken(null);
-			if (typeof window !== 'undefined') {
-				window.location.href = '/login';
-			}
-		}
 		const error = await response.json().catch(() => ({ message: 'Request failed' }));
 		throw new Error(error.message || `API error: ${response.status}`);
 	}

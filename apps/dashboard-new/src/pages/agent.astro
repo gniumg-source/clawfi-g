@@ -149,12 +149,6 @@ import AgentStatusCards from '../components/AgentStatusCards';
 </LayoutSidebar>
 
 <script>
-	// Check authentication
-	const token = localStorage.getItem('clawfi_token');
-	if (!token) {
-		window.location.href = '/login';
-	}
-
 	// Quick command buttons
 	document.querySelectorAll('.quick-cmd').forEach(btn => {
 		btn.addEventListener('click', () => {
