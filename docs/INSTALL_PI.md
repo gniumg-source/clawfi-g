@@ -1,309 +1,175 @@
-# ClawFi Installation on Raspberry Pi
+# ClawF on Raspberry Pi
 
-This guide covers installing ClawFi on a Raspberry Pi 4/5 for headless 24/7 operation.
+**Your AI trading agent running 24/7 on your own hardware.**
+
+ClawF transforms your Raspberry Pi into a dedicated trading intelligence appliance. No cloud dependencies, no subscription fees—your machine, your rules.
 
 ## Requirements
 
-- Raspberry Pi 4 (4GB+) or Raspberry Pi 5
-- 32GB+ microSD card (or USB SSD for better performance)
-- Raspberry Pi OS Lite (64-bit)
-- Internet connection
+### Hardware
+- **Raspberry Pi 4** (4GB+ RAM recommended) or **Raspberry Pi 5**
+- 32GB+ microSD card (64GB recommended)
+- Reliable internet connection
+- Power supply (official RPi PSU recommended)
 
-## Step 1: Prepare the Pi
+### Software
+- Raspberry Pi OS (64-bit recommended)
+- SSH access enabled
 
-### Flash OS
+## Quick Install
 
-1. Download [Raspberry Pi Imager](https://www.raspberrypi.com/software/)
-2. Select "Raspberry Pi OS Lite (64-bit)"
-3. Configure:
-   - Enable SSH
-   - Set username/password
-   - Configure WiFi (if needed)
-4. Flash to SD card
-
-### First Boot
+One command to install ClawF:
 
 ```bash
-# SSH into your Pi
-ssh pi@raspberrypi.local
-
-# Update system
-sudo apt update && sudo apt upgrade -y
-
-# Set timezone
-sudo timedatectl set-timezone Your/Timezone
-
-# Install required packages
-sudo apt install -y curl git
+curl -sL https://raw.githubusercontent.com/ClawFiAI/clawfi/main/installers/linux/install.sh | sudo bash
 ```
 
-## Step 2: Install Dependencies
+The installer will:
+1. Install Node.js and dependencies
+2. Clone and build ClawF
+3. Configure systemd services for auto-start
+4. Generate secure credentials
+5. Start the ClawF agent and dashboard
 
-### Node.js
+## Post-Installation
 
-```bash
-# Install Node.js 20 via NodeSource
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
+After installation completes, you'll see:
 
-# Verify
-node --version  # Should be 20.x
+```
+Dashboard:     http://<your-pi-ip>:3000
+Agent API:     http://<your-pi-ip>:3001
+Health Check:  http://<your-pi-ip>:3001/health
 ```
 
-### pnpm
-
-```bash
-# Install pnpm
-sudo npm install -g pnpm
-
-# Verify
-pnpm --version
-```
-
-### PostgreSQL
-
-```bash
-# Install PostgreSQL
-sudo apt install -y postgresql postgresql-contrib
-
-# Start and enable
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
-
-# Create database and user
-sudo -u postgres psql << EOF
-CREATE USER clawfi WITH PASSWORD 'clawfi';
-CREATE DATABASE clawfi OWNER clawfi;
-GRANT ALL PRIVILEGES ON DATABASE clawfi TO clawfi;
-EOF
-```
-
-### Redis
-
-```bash
-# Install Redis
-sudo apt install -y redis-server
-
-# Start and enable
-sudo systemctl start redis-server
-sudo systemctl enable redis-server
-
-# Verify
-redis-cli ping  # Should return PONG
-```
-
-## Step 3: Install ClawFi
-
-### Clone Repository
-
-```bash
-# Create app directory
-sudo mkdir -p /opt/clawfi
-sudo chown $USER:$USER /opt/clawfi
-
-# Clone
-cd /opt
-git clone https://github.com/your-repo/clawfi.git
-cd clawfi
-```
-
-### Install Dependencies
-
-```bash
-# Install all dependencies
-pnpm install
-```
-
-### Build Packages
-
-```bash
-# Build all packages
-pnpm build
-```
-
-### Configure Environment
-
-```bash
-# Create environment file
-sudo mkdir -p /etc/clawfi
-sudo touch /etc/clawfi/environment
-sudo chmod 600 /etc/clawfi/environment
-
-# Generate keys
-MASTER_KEY=$(openssl rand -hex 32)
-JWT_SECRET=$(openssl rand -hex 32)
-
-# Edit environment file
-sudo tee /etc/clawfi/environment << EOF
-NODE_ENV=production
-PORT=3001
-HOST=0.0.0.0
-DATABASE_URL=postgresql://clawfi:clawfi@localhost:5432/clawfi?schema=public
-REDIS_URL=redis://localhost:6379
-JWT_SECRET=$JWT_SECRET
-CLAWFI_MASTER_KEY=$MASTER_KEY
-DEV_MODE=false
-EOF
-```
-
-**⚠️ IMPORTANT: Back up `/etc/clawfi/environment` securely. The master key cannot be recovered!**
-
-### Initialize Database
-
-```bash
-# Generate Prisma client
-cd /opt/clawfi
-pnpm db:generate
-
-# Push schema to database
-pnpm db:push
-
-# Run seed script
-pnpm db:seed
-```
-
-## Step 4: Setup Systemd Service
-
-### Install Service
-
-```bash
-# Copy service file
-sudo cp /opt/clawfi/infra/systemd/clawfi-node.service /etc/systemd/system/
-
-# Create clawfi user
-sudo useradd -r -s /bin/false clawfi
-
-# Set ownership
-sudo chown -R clawfi:clawfi /opt/clawfi
-
-# Create log directory
-sudo mkdir -p /opt/clawfi/logs
-sudo chown clawfi:clawfi /opt/clawfi/logs
-
-# Reload systemd
-sudo systemctl daemon-reload
-
-# Enable service
-sudo systemctl enable clawfi-node
-```
-
-### Start Service
-
-```bash
-# Start ClawFi
-sudo systemctl start clawfi-node
-
-# Check status
-sudo systemctl status clawfi-node
-
-# View logs
-journalctl -u clawfi-node -f
-```
-
-## Step 5: Configure Firewall
-
-```bash
-# Install ufw if not present
-sudo apt install -y ufw
-
-# Allow SSH
-sudo ufw allow ssh
-
-# Allow ClawFi API (adjust as needed)
-sudo ufw allow 3001/tcp
-
-# Enable firewall
-sudo ufw enable
-```
-
-## Step 6: Reverse Proxy (Optional)
-
-For HTTPS support, install Caddy:
-
-```bash
-# Install Caddy
-sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
-sudo apt update
-sudo apt install caddy
-
-# Configure Caddy
-sudo tee /etc/caddy/Caddyfile << EOF
-clawfi.yourdomain.com {
-    reverse_proxy localhost:3001
-}
-EOF
-
-# Restart Caddy
-sudo systemctl restart caddy
-```
-
-## Monitoring
-
-### System Health
+### Verify Installation
 
 ```bash
 # Check service status
-sudo systemctl status clawfi-node
+sudo systemctl status clawfi
 
-# View recent logs
-journalctl -u clawfi-node --since "1 hour ago"
+# View live logs
+sudo journalctl -u clawfi -f
 
-# Monitor resource usage
-htop
+# Quick status check
+sudo /opt/clawfi/installers/linux/status.sh
 ```
 
-### API Health Check
+## Configuration
+
+Configuration is stored in `/opt/clawfi/data/.env`:
 
 ```bash
-# Check API
-curl http://localhost:3001/health
+# Edit configuration
+sudo nano /opt/clawfi/data/.env
+
+# Restart after changes
+sudo systemctl restart clawfi
 ```
 
-## Maintenance
+### Key Settings
 
-### Updates
+```env
+# RPC Endpoints (add your own for better performance)
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+BASE_RPC_URL=https://mainnet.base.org
 
-```bash
-# Stop service
-sudo systemctl stop clawfi-node
+# Inference Provider (local = no external API needed)
+INFERENCE_PROVIDER=local
 
-# Pull updates
-cd /opt/clawfi
-git pull
-
-# Install dependencies
-pnpm install
-
-# Rebuild
-pnpm build
-
-# Run migrations
-pnpm db:push
-
-# Start service
-sudo systemctl start clawfi-node
+# Kill Switch (safety feature)
+KILL_SWITCH_ENABLED=true
+KILL_SWITCH_DEFAULT=false
 ```
 
-### Backups
+## Commands
+
+### Service Management
 
 ```bash
-# Backup database
-sudo -u postgres pg_dump clawfi > /backup/clawfi-$(date +%Y%m%d).sql
+# Start ClawF
+sudo systemctl start clawfi
 
-# Backup environment (store securely!)
-sudo cp /etc/clawfi/environment /backup/
+# Stop ClawF
+sudo systemctl stop clawfi
+
+# Restart ClawF
+sudo systemctl restart clawfi
+
+# Enable auto-start on boot
+sudo systemctl enable clawfi
 ```
 
 ### Logs
 
 ```bash
-# View logs
-journalctl -u clawfi-node -f
+# View agent logs
+sudo journalctl -u clawfi -f
 
-# Rotate logs (automatic with journald)
-# Or configure in /etc/systemd/journald.conf
+# View dashboard logs
+sudo journalctl -u clawfi-dashboard -f
+
+# View last 100 lines
+sudo journalctl -u clawfi -n 100
+```
+
+### Updates
+
+```bash
+sudo /opt/clawfi/installers/linux/update.sh
+```
+
+Updates will:
+- Create a backup of your data
+- Pull the latest code
+- Rebuild the application
+- Restart services
+- Preserve all configuration and data
+
+## Data & Backups
+
+### Data Location
+
+All data is stored in `/opt/clawfi/data/`:
+- `db/` - SQLite database
+- `logs/` - Application logs
+- `cache/` - Temporary cache
+- `backups/` - Automatic backups
+- `.env` - Configuration
+- `.master_key` - Encryption key
+
+### Manual Backup
+
+```bash
+# Create backup
+sudo tar -czf ~/clawfi-backup-$(date +%Y%m%d).tar.gz -C /opt/clawfi/data .
+
+# Restore backup
+sudo tar -xzf ~/clawfi-backup-YYYYMMDD.tar.gz -C /opt/clawfi/data
+sudo systemctl restart clawfi
+```
+
+## Ports
+
+| Port | Service | Description |
+|------|---------|-------------|
+| 3000 | Dashboard | Web UI |
+| 3001 | Agent API | REST API |
+
+If you need to change ports, edit `/opt/clawfi/data/.env`:
+
+```env
+PORT=3001
+DASHBOARD_PORT=3000
+```
+
+## Uninstall
+
+```bash
+# Keep data
+sudo /opt/clawfi/installers/linux/uninstall.sh
+
+# Remove everything including data
+sudo /opt/clawfi/installers/linux/uninstall.sh --purge
 ```
 
 ## Troubleshooting
@@ -311,46 +177,59 @@ journalctl -u clawfi-node -f
 ### Service Won't Start
 
 ```bash
-# Check logs for errors
-journalctl -u clawfi-node -e
+# Check for errors
+sudo journalctl -u clawfi -n 50 --no-pager
 
-# Verify environment file
-sudo cat /etc/clawfi/environment
+# Check disk space
+df -h
 
-# Test manually
-sudo -u clawfi NODE_ENV=production node /opt/clawfi/apps/node/dist/index.js
+# Check memory
+free -h
 ```
 
-### Database Connection Issues
+### High Memory Usage
 
-```bash
-# Check PostgreSQL status
-sudo systemctl status postgresql
-
-# Verify connection
-psql -U clawfi -d clawfi -h localhost -c "SELECT 1;"
-```
-
-### Memory Issues
-
-Raspberry Pi 4 with 4GB should be sufficient. If you experience issues:
+If your Pi runs out of memory:
 
 ```bash
 # Add swap (if not present)
-sudo dphys-swapfile swapoff
-sudo nano /etc/dphys-swapfile  # Set CONF_SWAPSIZE=2048
 sudo dphys-swapfile setup
 sudo dphys-swapfile swapon
+```
 
-# Monitor memory
-free -h
+### Permission Issues
+
+```bash
+# Fix permissions
+sudo chown -R clawfi:clawfi /opt/clawfi
+```
+
+### Port Already in Use
+
+```bash
+# Find what's using the port
+sudo lsof -i :3001
+
+# Change port in config
+sudo nano /opt/clawfi/data/.env
 ```
 
 ## Performance Tips
 
-1. **Use USB SSD** instead of SD card for better I/O
-2. **Overclock** Pi 5 if thermal solution allows
-3. **Reduce logging** in production
-4. **Optimize PostgreSQL** for low memory (`shared_buffers = 256MB`)
+1. **Use a fast microSD card** - Class 10 or better
+2. **Add a USB SSD** - For better database performance
+3. **Use Raspberry Pi OS Lite** - Less overhead without desktop
+4. **Enable cgroups** - For better resource management
+5. **Use a dedicated Pi** - Don't run other heavy services
 
+## Security Recommendations
 
+1. **Change default SSH password**
+2. **Enable firewall** - Only allow ports 3000, 3001
+3. **Use HTTPS** - Put behind a reverse proxy with SSL
+4. **Regular updates** - Keep your Pi OS and ClawF updated
+5. **Network isolation** - Use a dedicated network/VLAN if possible
+
+---
+
+**ClawF runs on your Raspberry Pi 24/7. Your machine. Your rules.**
