@@ -10,91 +10,47 @@ import GemHunter from '../components/GemHunter';
 			<div>
 				<h1 class="text-2xl font-bold text-white flex items-center gap-2">
 					<img src="/logo-square.png" alt="ClawF" class="w-10 h-10 rounded-xl" />
-					ClawF 100x Scanner
+					ClawF Agent
 				</h1>
-				<p class="text-secondary mt-1">ClawF's AI-powered gem detection for 100x opportunities</p>
+				<p class="text-secondary mt-1">AI agent scanning for high-potential opportunities</p>
+			</div>
+			<div class="flex items-center gap-2 text-sm">
+				<span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+				<span class="text-emerald-400">Agent Active</span>
 			</div>
 		</div>
 
-		<!-- Strategy Explainer -->
-		<div class="card-glass p-6 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-purple-500/30">
-			<h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-				<span>🦀</span> ClawF's 100x Detection Strategy
-			</h2>
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-				<div class="bg-black/20 rounded-lg p-4">
-					<div class="text-purple-400 font-bold mb-2">🆕 Ultra Fresh</div>
-					<p class="text-gray-300">Enter tokens &lt; 10 minutes old for maximum upside potential before price discovery</p>
+		<!-- Agent Status -->
+		<div class="card-glass p-4 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-purple-500/30">
+			<div class="flex items-center justify-between">
+				<div class="flex items-center gap-3">
+					<div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+						<span class="text-2xl">🦀</span>
+					</div>
+					<div>
+						<div class="font-semibold text-white">ClawF is working</div>
+						<div class="text-sm text-gray-400">Continuously scanning markets for opportunities</div>
+					</div>
 				</div>
-				<div class="bg-black/20 rounded-lg p-4">
-					<div class="text-purple-400 font-bold mb-2">💰 Ultra Low MCap</div>
-					<p class="text-gray-300">Target &lt; $50K market cap. A $10K token reaching $1M is 100x</p>
-				</div>
-				<div class="bg-black/20 rounded-lg p-4">
-					<div class="text-purple-400 font-bold mb-2">📈 Strong Buying</div>
-					<p class="text-gray-300">&gt; 65% buy ratio shows high conviction from early buyers</p>
-				</div>
-				<div class="bg-black/20 rounded-lg p-4">
-					<div class="text-purple-400 font-bold mb-2">🚀 Parabolic Momentum</div>
-					<p class="text-gray-300">&gt; 50% gain in first hour indicates strong launch momentum</p>
-				</div>
-				<div class="bg-black/20 rounded-lg p-4">
-					<div class="text-purple-400 font-bold mb-2">🔥 Viral Activity</div>
-					<p class="text-gray-300">High transaction count early means discovery is happening</p>
-				</div>
-				<div class="bg-black/20 rounded-lg p-4">
-					<div class="text-purple-400 font-bold mb-2">🌙 MOONSHOT Alert</div>
-					<p class="text-gray-300">When ALL indicators align = highest probability 100x setup</p>
+				<div class="text-right">
+					<div class="text-xs text-gray-500">Scanning</div>
+					<div class="text-purple-400 font-mono">24/7</div>
 				</div>
 			</div>
 		</div>
 
-		<!-- Validated Results -->
-		<div class="card-glass p-6 border-emerald-500/30">
-			<h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-				<span>🏆</span> ClawF Validated Results
-			</h2>
-			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-				<div class="bg-emerald-900/30 rounded-lg p-4 text-center">
-					<div class="text-3xl font-bold text-emerald-400">98x</div>
-					<div class="text-gray-400 text-sm">NASA</div>
-				</div>
-				<div class="bg-emerald-900/30 rounded-lg p-4 text-center">
-					<div class="text-3xl font-bold text-emerald-400">97x</div>
-					<div class="text-gray-400 text-sm">Tesla AI</div>
-				</div>
-				<div class="bg-blue-900/30 rounded-lg p-4 text-center">
-					<div class="text-3xl font-bold text-blue-400">9.3x</div>
-					<div class="text-gray-400 text-sm">MOLT</div>
-				</div>
-				<div class="bg-blue-900/30 rounded-lg p-4 text-center">
-					<div class="text-3xl font-bold text-blue-400">7x</div>
-					<div class="text-gray-400 text-sm">Reldo</div>
-				</div>
-			</div>
-			<p class="text-xs text-gray-500 mt-4 text-center">Past performance does not guarantee future results. DYOR.</p>
-		</div>
-
-		<!-- Main GEM HUNTER -->
+		<!-- Main Agent Output -->
 		<div class="card-glass overflow-hidden border-purple-500/30">
 			<div class="p-6">
 				<GemHunter client:load />
 			</div>
 		</div>
 
-		<!-- Risk Warning -->
-		<div class="card-glass p-4 bg-red-900/20 border-red-500/30">
-			<div class="flex items-start gap-4">
-				<span class="text-2xl">⚠️</span>
-				<div>
-					<h3 class="font-bold text-red-400">High Risk Warning</h3>
-					<p class="text-sm text-gray-400 mt-1">
-						Ultra-early gem hunting is extremely high risk. Most tokens fail within hours. 
-						Only invest what you can afford to lose completely. This is not financial advice. 
-						Always do your own research before investing.
-					</p>
-				</div>
-			</div>
+		<!-- Disclaimer -->
+		<div class="card-glass p-4 border-gray-700/50">
+			<p class="text-xs text-gray-500 text-center">
+				ClawF is an AI agent. Signals are informational only and not financial advice. Always DYOR.
+			</p>
 		</div>
 	</div>
 </LayoutSidebar>

@@ -136,11 +136,14 @@ export default function GemHunter() {
 			<div className="flex items-center justify-between">
 				<div>
 					<div className="flex items-center gap-3">
-						<img src="/logo-square.png" alt="ClawF" className="w-10 h-10 rounded-xl" />
+						<div className="relative">
+							<div className="w-3 h-3 bg-emerald-500 rounded-full absolute -top-1 -right-1 animate-pulse"></div>
+							<span className="text-3xl">🦀</span>
+						</div>
 						<div>
-							<h2 className="text-xl font-bold text-white">ClawF 100x Scanner</h2>
+							<h2 className="text-xl font-bold text-white">ClawF Finds</h2>
 							<p className="text-sm text-gray-400">
-								AI-powered gem detection
+								{gems.length > 0 ? `${gems.length} opportunities detected` : 'Scanning...'}
 								{lastUpdated && ` • ${lastUpdated.toLocaleTimeString()}`}
 							</p>
 						</div>
@@ -157,50 +160,20 @@ export default function GemHunter() {
 								<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
 								<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
 							</svg>
-							Scanning...
+							Working...
 						</>
 					) : (
-						<>🦀 Scan Now</>
+						<>🔄 Refresh</>
 					)}
 				</button>
-			</div>
-
-			{/* Strategy Info */}
-			<div className="p-4 bg-gradient-to-r from-primary-900/30 to-blue-900/30 rounded-xl border border-primary-700/30">
-				<div className="flex items-center gap-2 mb-2">
-					<span className="text-lg">🦀</span>
-					<span className="font-semibold text-white">ClawF's 100x Strategy</span>
-				</div>
-				<div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
-					<div className="bg-black/20 rounded p-2">
-						<div className="text-primary-400 font-medium">Ultra Fresh</div>
-						<div className="text-gray-400">{'< 10 min old'}</div>
-					</div>
-					<div className="bg-black/20 rounded p-2">
-						<div className="text-primary-400 font-medium">Low MCap</div>
-						<div className="text-gray-400">{'< $50K'}</div>
-					</div>
-					<div className="bg-black/20 rounded p-2">
-						<div className="text-primary-400 font-medium">Buy Pressure</div>
-						<div className="text-gray-400">{'> 65%'}</div>
-					</div>
-					<div className="bg-black/20 rounded p-2">
-						<div className="text-primary-400 font-medium">Parabolic</div>
-						<div className="text-gray-400">{'> 50% 1h'}</div>
-					</div>
-					<div className="bg-black/20 rounded p-2">
-						<div className="text-primary-400 font-medium">Viral</div>
-						<div className="text-gray-400">High activity</div>
-					</div>
-				</div>
 			</div>
 
 			{/* Gems Grid */}
 			{gems.length === 0 ? (
 				<div className="bg-gray-800 rounded-xl border border-gray-700 p-8 text-center">
-					<span className="text-5xl mb-4 block">🔍</span>
-					<h3 className="text-lg font-medium text-white mb-2">Hunting for gems...</h3>
-					<p className="text-gray-400">Scanning for ultra-early 100x opportunities. Check back in a moment!</p>
+					<span className="text-5xl mb-4 block">🦀</span>
+					<h3 className="text-lg font-medium text-white mb-2">ClawF is analyzing markets...</h3>
+					<p className="text-gray-400">The agent is scanning for opportunities. Results will appear here.</p>
 				</div>
 			) : (
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -260,30 +233,21 @@ export default function GemHunter() {
 										</div>
 									</div>
 
-									{/* Stats */}
-									<div className="grid grid-cols-3 gap-2 mb-3">
-										<div className="bg-gray-700/30 rounded p-2 text-center">
-											<div className="text-white font-medium">{formatNumber(gem.fdv)}</div>
-											<div className="text-xs text-gray-400">MCap</div>
-										</div>
-										<div className="bg-gray-700/30 rounded p-2 text-center">
-											<div className="text-white font-medium">{formatNumber(gem.liquidity)}</div>
-											<div className="text-xs text-gray-400">Liquidity</div>
-										</div>
-										<div className="bg-gray-700/30 rounded p-2 text-center">
-											<div className="text-white font-medium">{gem.conditionsPassed}/{gem.conditionsTotal}</div>
-											<div className="text-xs text-gray-400">Conditions</div>
-										</div>
+								{/* Stats */}
+								<div className="grid grid-cols-3 gap-2 mb-3">
+									<div className="bg-gray-700/30 rounded p-2 text-center">
+										<div className="text-white font-medium">{formatNumber(gem.fdv)}</div>
+										<div className="text-xs text-gray-400">MCap</div>
 									</div>
-
-									{/* Top Signals */}
-									<div className="flex flex-wrap gap-1 mb-3">
-										{gem.signals.slice(0, 3).map((sig, i) => (
-											<span key={i} className="px-2 py-1 text-xs bg-gray-700/50 text-gray-300 rounded truncate max-w-full">
-												{sig.length > 40 ? sig.substring(0, 40) + '...' : sig}
-											</span>
-										))}
+									<div className="bg-gray-700/30 rounded p-2 text-center">
+										<div className="text-white font-medium">{formatNumber(gem.liquidity)}</div>
+										<div className="text-xs text-gray-400">Liquidity</div>
 									</div>
+									<div className="bg-gray-700/30 rounded p-2 text-center">
+										<div className="text-white font-medium">{formatPrice(gem.priceUsd)}</div>
+										<div className="text-xs text-gray-400">Price</div>
+									</div>
+								</div>
 
 									{/* Actions */}
 									<div className="flex gap-2">
@@ -321,13 +285,6 @@ export default function GemHunter() {
 				</div>
 			)}
 
-			{/* Disclaimer */}
-			<div className="p-3 bg-yellow-900/20 rounded-lg border border-yellow-700/30 text-xs text-yellow-200/70">
-				<p>
-					⚠️ <strong>High Risk.</strong> Ultra-early gems have extreme volatility. Most fail. 
-					Only invest what you can lose. DYOR. Not financial advice.
-				</p>
-			</div>
 		</div>
 	);
 }
