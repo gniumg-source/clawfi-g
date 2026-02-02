@@ -409,8 +409,7 @@ export class DiscoveryEngine {
     else if (token.liquidity >= 5000) liquidity += 15;
     else liquidity += 5;
 
-    // Liquidity to mcap ratio
-    const liqRatio = token.fdv > 0 ? (token.liquidity / token.fdv) * 100 : 0;
+    // Liquidity to mcap ratio (liqRatio already defined above)
     if (liqRatio >= 20) liquidity += 30;
     else if (liqRatio >= 10) liquidity += 25;
     else if (liqRatio >= 5) liquidity += 20;
