@@ -89,16 +89,16 @@ export default function GemHunter() {
 	// Get the best signal (moonshot > prime gem > ultra fresh)
 	const getBestSignal = (signals: string[]) => {
 		const moonshot = signals.find(s => s.includes('MOONSHOT'));
-		if (moonshot) return { text: '🌙 MOONSHOT', class: 'bg-purple-600 text-white animate-pulse' };
+		if (moonshot) return { text: '🦀 MOONSHOT', class: 'bg-primary-600 text-white animate-pulse' };
 		
 		const prime = signals.find(s => s.includes('PRIME GEM'));
-		if (prime) return { text: '💎 PRIME GEM', class: 'bg-emerald-600 text-white' };
+		if (prime) return { text: '🦀 PRIME', class: 'bg-emerald-600 text-white' };
 		
 		const parabolic = signals.find(s => s.includes('PARABOLIC'));
 		if (parabolic) return { text: '🚀 PARABOLIC', class: 'bg-orange-600 text-white' };
 		
 		const fresh = signals.find(s => s.includes('ULTRA FRESH'));
-		if (fresh) return { text: '🆕 ULTRA FRESH', class: 'bg-blue-600 text-white' };
+		if (fresh) return { text: '🆕 FRESH', class: 'bg-blue-600 text-white' };
 		
 		return { text: '💎 GEM', class: 'bg-gray-600 text-white' };
 	};
@@ -136,11 +136,11 @@ export default function GemHunter() {
 			<div className="flex items-center justify-between">
 				<div>
 					<div className="flex items-center gap-3">
-						<span className="text-3xl">💎</span>
+						<img src="/logo-square.png" alt="ClawF" className="w-10 h-10 rounded-xl" />
 						<div>
-							<h2 className="text-xl font-bold text-white">100x GEM HUNTER</h2>
+							<h2 className="text-xl font-bold text-white">ClawF 100x Scanner</h2>
 							<p className="text-sm text-gray-400">
-								Ultra-early tokens with 100x potential
+								AI-powered gem detection
 								{lastUpdated && ` • ${lastUpdated.toLocaleTimeString()}`}
 							</p>
 						</div>
@@ -149,7 +149,7 @@ export default function GemHunter() {
 				<button
 					onClick={fetchGems}
 					disabled={loading}
-					className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+					className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
 				>
 					{loading ? (
 						<>
@@ -157,39 +157,39 @@ export default function GemHunter() {
 								<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
 								<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
 							</svg>
-							Hunting...
+							Scanning...
 						</>
 					) : (
-						<>🔍 Hunt Gems</>
+						<>🦀 Scan Now</>
 					)}
 				</button>
 			</div>
 
 			{/* Strategy Info */}
-			<div className="p-4 bg-gradient-to-r from-purple-900/30 to-blue-900/30 rounded-xl border border-purple-700/30">
+			<div className="p-4 bg-gradient-to-r from-primary-900/30 to-blue-900/30 rounded-xl border border-primary-700/30">
 				<div className="flex items-center gap-2 mb-2">
-					<span className="text-lg">🎯</span>
-					<span className="font-semibold text-white">100x Strategy</span>
+					<span className="text-lg">🦀</span>
+					<span className="font-semibold text-white">ClawF's 100x Strategy</span>
 				</div>
 				<div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
 					<div className="bg-black/20 rounded p-2">
-						<div className="text-purple-400 font-medium">Ultra Fresh</div>
+						<div className="text-primary-400 font-medium">Ultra Fresh</div>
 						<div className="text-gray-400">{'< 10 min old'}</div>
 					</div>
 					<div className="bg-black/20 rounded p-2">
-						<div className="text-purple-400 font-medium">Low MCap</div>
+						<div className="text-primary-400 font-medium">Low MCap</div>
 						<div className="text-gray-400">{'< $50K'}</div>
 					</div>
 					<div className="bg-black/20 rounded p-2">
-						<div className="text-purple-400 font-medium">Buy Pressure</div>
+						<div className="text-primary-400 font-medium">Buy Pressure</div>
 						<div className="text-gray-400">{'> 65%'}</div>
 					</div>
 					<div className="bg-black/20 rounded p-2">
-						<div className="text-purple-400 font-medium">Parabolic</div>
+						<div className="text-primary-400 font-medium">Parabolic</div>
 						<div className="text-gray-400">{'> 50% 1h'}</div>
 					</div>
 					<div className="bg-black/20 rounded p-2">
-						<div className="text-purple-400 font-medium">Viral</div>
+						<div className="text-primary-400 font-medium">Viral</div>
 						<div className="text-gray-400">High activity</div>
 					</div>
 				</div>
@@ -213,9 +213,9 @@ export default function GemHunter() {
 							<div 
 								key={gem.address}
 								className={`bg-gray-800 rounded-xl border transition-all hover:scale-[1.02] ${
-									isMoonshot ? 'border-purple-500 ring-2 ring-purple-500/30 animate-pulse' :
+									isMoonshot ? 'border-primary-500 ring-2 ring-primary-500/30 animate-pulse' :
 									isParabolic ? 'border-orange-500' :
-									index === 0 ? 'border-emerald-500' : 
+									index === 0 ? 'border-primary-500' : 
 									'border-gray-700'
 								}`}
 							>
@@ -295,17 +295,17 @@ export default function GemHunter() {
 										>
 											📊 Chart
 										</a>
-										<a
-											href={gem.chain === 'solana' 
-												? `https://jup.ag/swap/SOL-${gem.address}`
-												: `https://app.uniswap.org/swap?chain=${gem.chain}&outputCurrency=${gem.address}`
-											}
-											target="_blank"
-											rel="noopener noreferrer"
-											className="flex-1 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm text-center transition-colors font-medium"
-										>
-											⚡ Trade
-										</a>
+									<a
+										href={gem.chain === 'solana' 
+											? `https://jup.ag/swap/SOL-${gem.address}`
+											: `https://app.uniswap.org/swap?chain=${gem.chain}&outputCurrency=${gem.address}`
+										}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="flex-1 px-3 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm text-center transition-colors font-medium"
+									>
+										⚡ Trade
+									</a>
 										<button
 											onClick={() => navigator.clipboard.writeText(gem.address)}
 											className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-sm transition-colors"
