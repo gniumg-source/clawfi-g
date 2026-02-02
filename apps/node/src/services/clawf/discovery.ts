@@ -332,22 +332,24 @@ export class DiscoveryEngine {
     // ============================================
     // PRIME PATTERN: Accumulation (calm before storm)
     // HIGH vol/mcap + FLAT price = smart money loading quietly
+    // ONLY if not in freefall (6h > -50%)
     // ============================================
+    const notInFreefall = (token.priceChange6h || 0) > -50;
     
     // BEST: Extreme volume but price flat = massive accumulation
-    if (volumeRatio > 20 && Math.abs(token.priceChange1h) < 10 && buyRatio > 0.55) {
+    if (volumeRatio > 20 && Math.abs(token.priceChange1h) < 10 && buyRatio > 0.55 && notInFreefall) {
       momentum += 50; // Highest bonus - this is the perfect setup!
       signals.push(`🔥 STEALTH LOAD: ${(volumeRatio * 100).toFixed(0)}% vol/mcap, price flat - PRIME ENTRY`);
     }
-    else if (volumeRatio > 5 && Math.abs(token.priceChange1h) < 10 && buyRatio > 0.50) {
+    else if (volumeRatio > 5 && Math.abs(token.priceChange1h) < 10 && buyRatio > 0.50 && notInFreefall) {
       momentum += 35;
       signals.push(`🎯 BREAKOUT SETUP: Heavy volume, buyers loading`);
     }
-    else if (volumeRatio > 0.5 && token.priceChange1h >= 0 && token.priceChange1h < 30 && buyRatio > 0.55) {
+    else if (volumeRatio > 0.5 && token.priceChange1h >= 0 && token.priceChange1h < 30 && buyRatio > 0.55 && notInFreefall) {
       momentum += 30;
       signals.push(`📥 Accumulation phase detected`);
     }
-    else if (volumeRatio > 0.3 && buyRatio > 0.55 && token.priceChange1h >= 0) {
+    else if (volumeRatio > 0.3 && buyRatio > 0.55 && token.priceChange1h >= 0 && notInFreefall) {
       momentum += 20;
     }
 
