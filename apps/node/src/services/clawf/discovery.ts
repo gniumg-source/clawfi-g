@@ -330,46 +330,51 @@ export class DiscoveryEngine {
     }
 
     // ============================================
-    // PRIME PATTERN: Accumulation Breakout
-    // High vol/mcap + positive 1h + buy pressure = about to rip
+    // PRIME PATTERN: Accumulation (calm before storm)
+    // HIGH vol/mcap + FLAT price = smart money loading quietly
     // ============================================
-    if (volumeRatio > 0.5 && token.priceChange1h >= 0 && token.priceChange1h < 30 && buyRatio > 0.55) {
-      momentum += 40;
+    
+    // BEST: Extreme volume but price flat = massive accumulation
+    if (volumeRatio > 20 && Math.abs(token.priceChange1h) < 10 && buyRatio > 0.55) {
+      momentum += 50; // Highest bonus - this is the perfect setup!
+      signals.push(`🔥 STEALTH LOAD: ${(volumeRatio * 100).toFixed(0)}% vol/mcap, price flat - PRIME ENTRY`);
+    }
+    else if (volumeRatio > 5 && Math.abs(token.priceChange1h) < 10 && buyRatio > 0.50) {
+      momentum += 35;
       signals.push(`🎯 BREAKOUT SETUP: Heavy volume, buyers loading`);
     }
-    else if (volumeRatio > 0.3 && buyRatio > 0.55 && token.priceChange1h >= 0) {
-      momentum += 25;
+    else if (volumeRatio > 0.5 && token.priceChange1h >= 0 && token.priceChange1h < 30 && buyRatio > 0.55) {
+      momentum += 30;
       signals.push(`📥 Accumulation phase detected`);
+    }
+    else if (volumeRatio > 0.3 && buyRatio > 0.55 && token.priceChange1h >= 0) {
+      momentum += 20;
     }
 
     // ============================================
-    // SWEET SPOT: Early Momentum (5-30% 1h)
-    // Just started moving = best entry
+    // MOMENTUM ANALYSIS: Lower weight - early movers often reverse
+    // Focus on catching BEFORE the move, not during
     // ============================================
-    if (token.priceChange1h >= 5 && token.priceChange1h < 30) {
-      momentum += 35;
-      signals.push(`⚡ PRIME ENTRY: Early momentum +${token.priceChange1h.toFixed(0)}%`);
+    if (token.priceChange1h >= 0 && token.priceChange1h < 5) {
+      // BEST: Flat price = haven't moved yet
+      momentum += 15;
+      signals.push(`🎯 GROUND FLOOR: Price stable, waiting for catalyst`);
+    }
+    else if (token.priceChange1h >= 5 && token.priceChange1h < 15) {
+      momentum += 20;
+      signals.push(`⚡ Early move +${token.priceChange1h.toFixed(0)}%`);
+    }
+    else if (token.priceChange1h >= 15 && token.priceChange1h < 30) {
+      momentum += 15; // Lower - might be topping
+      signals.push(`🚀 Active +${token.priceChange1h.toFixed(0)}% - watch for reversal`);
     }
     else if (token.priceChange1h >= 30 && token.priceChange1h < 60) {
-      momentum += 20;
-      signals.push(`🚀 Active pump +${token.priceChange1h.toFixed(0)}% - can still catch`);
+      momentum += 5; // Very low - likely topping
+      signals.push(`⚠️ Extended +${token.priceChange1h.toFixed(0)}% - high reversal risk`);
     }
-    else if (token.priceChange1h >= 60 && token.priceChange1h < 100) {
-      momentum += 10;
-      signals.push(`⚠️ Fast mover +${token.priceChange1h.toFixed(0)}% - risky entry`);
-    }
-    else if (token.priceChange1h >= 100) {
-      momentum -= 10; // Penalty for very late
-      signals.push(`🚨 TOO LATE: Already +${token.priceChange1h.toFixed(0)}%`);
-    }
-    else if (token.priceChange1h >= 0 && token.priceChange1h < 5) {
-      // Flat but not negative = potential accumulation
-      if (volumeRatio > 0.5) {
-        momentum += 30;
-        signals.push(`🔥 STEALTH MODE: High volume, flat price = loading`);
-      } else {
-        momentum += 10;
-      }
+    else if (token.priceChange1h >= 60) {
+      momentum -= 15; // Penalty
+      signals.push(`🚨 FOMO TRAP: +${token.priceChange1h.toFixed(0)}% - likely to reverse`);
     }
 
     // ============================================
