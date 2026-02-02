@@ -101,11 +101,13 @@ const styles = `
     padding: 0;
   }
   
+  @import url('https://fonts.googleapis.com/css2?family=Doto:wght@100;200;300;400;500;600;700;800;900&display=swap');
+  
   body {
     width: 400px;
     height: 580px;
     overflow: hidden;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-family: 'Doto', monospace;
     background: linear-gradient(145deg, #0a0a12 0%, #12121a 50%, #0d0d15 100%);
     color: rgba(255, 255, 255, 0.95);
     -webkit-font-smoothing: antialiased;

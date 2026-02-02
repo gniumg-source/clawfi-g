@@ -21,10 +21,10 @@ const { class: clazz } = Astro.props;
 		<meta name="author" content="ClawFi" />
 		<meta name="robots" content="noindex, nofollow" />
 		
-		<!-- Fonts - SF Pro style -->
+		<!-- Fonts - Doto (digital style) -->
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+		<link href="https://fonts.googleapis.com/css2?family=Doto:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
 		<script is:inline>
 			document.documentElement.classList.add('dark');
@@ -429,6 +429,15 @@ const { class: clazz } = Astro.props;
 	/* ============================================
 	   TYPOGRAPHY
 	   ============================================ */
+	
+	/* Global Doto font */
+	html, body {
+		font-family: 'Doto', monospace;
+	}
+	
+	* {
+		font-family: inherit;
+	}
 	
 	.text-primary {
 		color: var(--accent-blue);
