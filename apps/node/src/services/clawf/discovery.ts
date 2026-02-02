@@ -340,27 +340,62 @@ export class DiscoveryEngine {
   }
 
   /**
-   * Fetch trending tokens from DexScreener
+   * Fetch trending/boosted tokens from DexScreener
    */
   private async fetchTrending(): Promise<Partial<TokenCandidate>[]> {
-    const data = await fetchWithCache<{ pairs?: DexPair[] }>(
-      `${DEXSCREENER_API}/latest/dex/tokens/trending`,
-      'dex-trending'
+    // Use token-boosts endpoint (more reliable than /trending)
+    const boosts = await fetchWithCache<DexBoost[]>(
+      `${DEXSCREENER_API}/token-boosts/top/v1`,
+      'dex-boosts'
     );
-    if (!data?.pairs) return [];
-    return data.pairs.map(p => this.pairToCandidate(p));
+    
+    if (!boosts || !Array.isArray(boosts)) return [];
+    
+    // Fetch full token data for boosted tokens
+    const candidates: Partial<TokenCandidate>[] = [];
+    
+    for (const boost of boosts.slice(0, 20)) {
+      const data = await fetchWithCache<{ pairs?: DexPair[] }>(
+        `${DEXSCREENER_API}/latest/dex/tokens/${boost.tokenAddress}`,
+        `token-${boost.tokenAddress}`,
+        15000
+      );
+      
+      if (data?.pairs?.[0]) {
+        candidates.push(this.pairToCandidate(data.pairs[0]));
+      }
+    }
+    
+    return candidates;
   }
 
   /**
-   * Fetch top gainers
+   * Fetch top gainers from multiple chains
    */
   private async fetchGainers(): Promise<Partial<TokenCandidate>[]> {
-    const data = await fetchWithCache<{ pairs?: DexPair[] }>(
-      `${DEXSCREENER_API}/latest/dex/pairs/trending`,
-      'dex-gainers'
-    );
-    if (!data?.pairs) return [];
-    return data.pairs.map(p => this.pairToCandidate(p));
+    const candidates: Partial<TokenCandidate>[] = [];
+    
+    // Fetch latest pairs from each supported chain
+    for (const chain of ['base', 'solana', 'bsc'] as const) {
+      const data = await fetchWithCache<{ pairs?: DexPair[] }>(
+        `${DEXSCREENER_API}/latest/dex/pairs/${chain}`,
+        `dex-pairs-${chain}`,
+        30000
+      );
+      
+      if (data?.pairs) {
+        // Filter for gainers (positive 24h change)
+        const gainers = data.pairs
+          .filter(p => (p.priceChange?.h24 || 0) > 10)
+          .slice(0, 10);
+        
+        for (const pair of gainers) {
+          candidates.push(this.pairToCandidate(pair));
+        }
+      }
+    }
+    
+    return candidates;
   }
 
   /**
@@ -554,6 +589,12 @@ interface DexPair {
   fdv?: number;
   txns?: { h24?: { buys: number; sells: number } };
   pairCreatedAt?: string;
+}
+
+interface DexBoost {
+  chainId: string;
+  tokenAddress: string;
+  amount?: number;
 }
 
 interface GeckoPair {
