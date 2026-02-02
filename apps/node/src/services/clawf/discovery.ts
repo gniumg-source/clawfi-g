@@ -188,7 +188,23 @@ export class DiscoveryEngine {
       evidence: `${candidate.uniqueBuyers24h} buyers vs ${candidate.uniqueSellers24h} sellers (${buyerRatio.toFixed(1)}x ratio)`,
     });
 
-    // CONDITION 3: MICRO CAP OPPORTUNITY
+    // CONDITION 3: FRESH TOKEN (< 6 hours old)
+    // Very new tokens have highest pump potential
+    const tokenAgeHours = candidate.pairCreatedAt 
+      ? (Date.now() - new Date(candidate.pairCreatedAt).getTime()) / (1000 * 60 * 60)
+      : 999;
+    const isFresh = tokenAgeHours < 6;
+    conditions.push({
+      name: 'Fresh Token',
+      passed: isFresh,
+      value: tokenAgeHours < 999 ? `${tokenAgeHours.toFixed(1)} hours old` : 'Unknown age',
+      threshold: '< 6 hours',
+      evidence: isFresh 
+        ? `🆕 Fresh launch: ${tokenAgeHours.toFixed(1)} hours old - early opportunity`
+        : tokenAgeHours < 24 ? `${tokenAgeHours.toFixed(0)} hours old` : 'Mature token',
+    });
+
+    // CONDITION 4: MICRO CAP OPPORTUNITY
     // Under $500K mcap has the most pump potential
     const isMicroCap = candidate.fdv < 500000 && candidate.fdv > 10000;
     conditions.push({
@@ -396,6 +412,25 @@ export class DiscoveryEngine {
     if (token.priceChange24h > 200 && token.priceChange1h < 0) {
       momentum -= 20;
       signals.push(`⛔ REVERSAL: Pumped ${token.priceChange24h.toFixed(0)}% then dumped`);
+    }
+
+    // ============================================
+    // FRESH TOKEN BONUS: New = undiscovered
+    // ============================================
+    const tokenAgeHours = token.pairCreatedAt 
+      ? (Date.now() - new Date(token.pairCreatedAt).getTime()) / (1000 * 60 * 60)
+      : 999;
+    
+    if (tokenAgeHours < 2) {
+      momentum += 25;
+      signals.push(`🆕 BRAND NEW: ${tokenAgeHours.toFixed(1)}h old - first mover advantage`);
+    }
+    else if (tokenAgeHours < 6) {
+      momentum += 15;
+      signals.push(`🌱 Fresh: ${tokenAgeHours.toFixed(0)}h old - early discovery`);
+    }
+    else if (tokenAgeHours < 24) {
+      momentum += 5;
     }
 
     // Liquidity Score (0-100)
