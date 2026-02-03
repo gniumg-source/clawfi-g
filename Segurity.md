@@ -1,0 +1,192 @@
+# ClawFi Security Model
+
+## Overview
+
+ClawFi is designed with security as a primary concern. This document outlines the threat model, security measures, and best practices.
+
+## Threat Model
+
+### Assets to Protect
+
+1. **Exchange API Keys**: Allow trading on connected exchanges
+2. **Wallet Information**: Addresses and activity being monitored
+3. **Trading Strategies**: Proprietary detection logic
+4. **User Credentials**: Dashboard authentication
+5. **Signal History**: May reveal trading patterns
+
+### Threat Actors
+
+1. **External Attackers**: Network-based attacks
+2. **Malicious Extensions/Apps**: Running on same system
+3. **Supply Chain**: Compromised dependencies
+4. **Physical Access**: Device theft or unauthorized access
+
+### Attack Vectors
+
+1. API key theft via memory dump or log exposure
+2. Man-in-the-middle on API communications
+3. Database compromise
+4. Session hijacking
+5. Social engineering
+
+## Security Measures
+
+### Secret Management
+
+**Encryption at Rest**
+- All API keys and secrets encrypted with AES-256-GCM
+- Per-secret key derivation using HKDF
+- Master key stored in environment variable (never in code/DB)
+
+```
+Master Key (env) → HKDF → Per-Secret Key → AES-256-GCM → Encrypted Data
+```
+
+**Key Rotation**
+- Support for re-encrypting secrets with new context
+- Version field for future encryption upgrades
+
+**Never Logged**
+- Secrets are redacted in all log output
+- Audit logs contain only sanitized data
+
+### API Key Restrictions
+
+**CRITICAL: Binance API Keys**
+
+When creating API keys for ClawFi:
+
+1. ✅ Enable: Spot Trading (if auto-trading desired)
+2. ✅ Enable: Read-Only for account info
+3. ❌ **DISABLE: Withdrawals** - ClawFi NEVER needs this
+4. ❌ **DISABLE: Futures Trading** (unless explicitly needed)
+5. ✅ Set IP whitelist to your node's IP
+
+ClawFi does NOT implement withdrawal endpoints by design.
+
+### Authentication
+
+**User Auth**
+- Passwords hashed with Argon2id
+- JWT tokens with configurable expiry
+- Secure token storage (HTTP-only cookies in browser)
+
+**API Auth**
+- Bearer token authentication
+- Rate limiting on all endpoints
+- Input validation with Zod
+
+### Network Security
+
+**Recommended Setup**
+- Run node behind reverse proxy (nginx/caddy)
+- Enable HTTPS/TLS
+- Firewall all ports except necessary
+- Use VPN for remote access
+
+**CORS**
+- Strict origin checking in production
+- Credentials require explicit allowlist
+
+### Risk Engine Guardrails
+
+Even if an attacker gains API access, they're limited by:
+
+1. **Max Order Size**: Hard limit on USD per trade
+2. **Max Position**: Limit on total exposure
+3. **Max Daily Loss**: Trading stops at threshold
+4. **Max Slippage**: Prevents manipulation attacks
+5. **Token Allowlist/Denylist**: Restrict tradeable assets
+6. **Cooldown Period**: Rate limit on trades
+7. **Dry-Run Mode**: Default to simulation
+8. **Kill Switch**: Emergency stop all trading
+
+### Audit Trail
+
+All actions are logged:
+- User authentication events
+- Connector operations
+- Trading requests (approved/rejected)
+- Risk policy changes
+- Strategy state changes
+
+Logs include:
+- Timestamp
+- User ID (if applicable)
+- Action type
+- Success/failure
+- Sanitized details (no secrets)
+
+## Best Practices
+
+### For Operators
+
+1. **Generate strong master key**
+   ```bash
+   openssl rand -hex 32
+   ```
+
+2. **Use environment files for secrets**
+   - Never commit `.env` to git
+   - Use file permissions (600)
+
+3. **Enable testnet first**
+   - Verify all functionality before mainnet
+
+4. **Regular backups**
+   - Database backups (encrypted)
+   - Keep master key backup secure and offline
+
+5. **Monitor audit logs**
+   - Set up alerts for suspicious activity
+
+6. **Update dependencies**
+   - Regular security updates
+   - Monitor for CVEs in dependencies
+
+### For Development
+
+1. **Never log secrets**
+   - Use `redactSensitive()` helper
+   - Review logs before commits
+
+2. **Validate all input**
+   - Use Zod schemas
+   - Sanitize database queries
+
+3. **Principle of least privilege**
+   - Connectors only get needed permissions
+   - Strategies can't access raw credentials
+
+4. **Secure defaults**
+   - Dry-run mode enabled by default
+   - Conservative risk limits
+
+## Incident Response
+
+If you suspect a security breach:
+
+1. **Enable Kill Switch** immediately
+2. **Revoke API keys** on exchanges
+3. **Review audit logs** for unauthorized actions
+4. **Rotate master key** if database compromised
+5. **Report issues** to security@clawfi.example
+
+## Known Limitations
+
+1. **Single-user mode**: Current auth is basic; not suitable for multi-tenant
+2. **Local execution**: Wallet signing requires user confirmation
+3. **No HSM support**: Master key in environment variable
+4. **Browser extension**: Inherits browser security model
+
+## Security Checklist
+
+- [ ] Strong master key generated and backed up
+- [ ] API keys have withdrawals disabled
+- [ ] Running behind HTTPS reverse proxy
+- [ ] Firewall configured
+- [ ] Dry-run mode tested before live trading
+- [ ] Audit logs being monitored
+- [ ] Regular backups configured
+- [ ] Kill switch tested and ready
+
